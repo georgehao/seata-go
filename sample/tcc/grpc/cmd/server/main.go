@@ -24,7 +24,6 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/seata/seata-go/pkg/client"
 	"github.com/seata/seata-go/pkg/common/log"
 	grpc2 "github.com/seata/seata-go/pkg/integration/grpc"
 	"github.com/seata/seata-go/pkg/rm/tcc"
@@ -33,7 +32,6 @@ import (
 )
 
 func main() {
-	client.Init()
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", 50051))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

@@ -24,8 +24,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/seata/seata-go/pkg/client"
-
 	"dubbo.apache.org/dubbo-go/v3/common/logger"
 	"dubbo.apache.org/dubbo-go/v3/config"
 	_ "dubbo.apache.org/dubbo-go/v3/imports"
@@ -35,7 +33,6 @@ import (
 
 // need to setup environment variable "DUBBO_GO_CONFIG_PATH" to "conf/dubbogo.yml" before run
 func main() {
-	client.Init()
 	userProviderProxy, err := tcc.NewTCCServiceProxy(&service.UserProvider{})
 	if err != nil {
 		logger.Errorf("get userProviderProxy tcc service proxy error, %v", err.Error())

@@ -26,7 +26,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/seata/seata-go/pkg/client"
 	"github.com/seata/seata-go/pkg/common/log"
 	grpc2 "github.com/seata/seata-go/pkg/integration/grpc"
 	"github.com/seata/seata-go/pkg/tm"
@@ -34,7 +33,7 @@ import (
 )
 
 func main() {
-	client.Init()
+	tm.InitTM()
 	flag.Parse()
 	// Set up a connection to the server.
 	conn, err := grpc.Dial("localhost:50051",
