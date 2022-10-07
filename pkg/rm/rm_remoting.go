@@ -22,8 +22,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/seata/seata-go/pkg/common/log"
-	"github.com/seata/seata-go/pkg/protocol/branch"
+	"github.com/seata/seata-go/pkg/util/log"
+	"github.com/seata/seata-go/pkg/constant"
 	"github.com/seata/seata-go/pkg/protocol/message"
 	"github.com/seata/seata-go/pkg/remoting/getty"
 )
@@ -49,7 +49,7 @@ func GetRMRemotingInstance() *RMRemoting {
 type RMRemoting struct {
 }
 
-//BranchRegister  Register branch of global transaction
+// BranchRegister  Register branch of global transaction
 func (r *RMRemoting) BranchRegister(param BranchRegisterParam) (int64, error) {
 	request := message.BranchRegisterRequest{
 		Xid:             param.Xid,
@@ -73,7 +73,7 @@ func (r *RMRemoting) BranchReport(param BranchReportParam) error {
 		BranchId:        param.BranchId,
 		Status:          param.Status,
 		ApplicationData: []byte(param.ApplicationData),
-		BranchType:      branch.BranchTypeAT,
+		BranchType:      constant.BranchTypeAT,
 	}
 
 	resp, err := getty.GetGettyRemotingClient().SendSyncRequest(request)

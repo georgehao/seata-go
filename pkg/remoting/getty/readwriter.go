@@ -20,7 +20,7 @@ package getty
 import (
 	"fmt"
 
-	"github.com/seata/seata-go/pkg/common/bytes"
+	"github.com/seata/seata-go/pkg/util/bytes"
 
 	getty "github.com/apache/dubbo-getty"
 	"github.com/pkg/errors"

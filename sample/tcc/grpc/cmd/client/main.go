@@ -25,8 +25,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/seata/seata-go/pkg/client"
-	"github.com/seata/seata-go/pkg/common/log"
+	"github.com/seata/seata-go/pkg/util/log"
 	grpc2 "github.com/seata/seata-go/pkg/integration/grpc"
 	"github.com/seata/seata-go/pkg/tm"
 	"github.com/seata/seata-go/sample/tcc/grpc/pb"
@@ -45,7 +44,7 @@ func main() {
 	defer conn.Close()
 	c1, c2 := pb.NewTCCServiceBusiness1Client(conn), pb.NewTCCServiceBusiness2Client(conn)
 
-	client.Init()
+	tm.Init()
 	tm.WithGlobalTx(
 		context.Background(),
 		&tm.TransactionInfo{

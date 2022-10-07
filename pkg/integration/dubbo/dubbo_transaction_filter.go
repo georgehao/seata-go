@@ -25,8 +25,9 @@ import (
 	"dubbo.apache.org/dubbo-go/v3/common/extension"
 	"dubbo.apache.org/dubbo-go/v3/filter"
 	"dubbo.apache.org/dubbo-go/v3/protocol"
-	"github.com/seata/seata-go/pkg/common"
-	"github.com/seata/seata-go/pkg/common/log"
+
+	"github.com/seata/seata-go/pkg/util/log"
+	"github.com/seata/seata-go/pkg/constant"
 	"github.com/seata/seata-go/pkg/tm"
 )
 
@@ -36,7 +37,7 @@ var (
 )
 
 func InitSeataDubbo() {
-	extension.SetFilter(common.SeataFilterKey, GetDubboTransactionFilter)
+	extension.SetFilter(constant.SeataFilterKey, GetDubboTransactionFilter)
 }
 
 type Filter interface {
@@ -61,9 +62,9 @@ func (d *dubboTransactionFilter) Invoke(ctx context.Context, invoker protocol.In
 
 	if xid != "" {
 		// dubbo go
-		invocation.SetAttachment(common.SeataXidKey, xid)
+		invocation.SetAttachment(constant.SeataXidKey, xid)
 		// dubbo java
-		invocation.SetAttachment(common.XidKey, xid)
+		invocation.SetAttachment(constant.XidKey, xid)
 	} else if rpcXid != xid {
 		ctx = tm.InitSeataContext(ctx)
 		tm.SetXID(ctx, rpcXid)
@@ -85,17 +86,17 @@ func (d *dubboTransactionFilter) getRpcXid(invocation protocol.Invocation) strin
 }
 
 func (*dubboTransactionFilter) getDubboGoRpcXid(invocation protocol.Invocation) string {
-	rpcXid := invocation.GetAttachmentWithDefaultValue(common.SeataXidKey, "")
+	rpcXid := invocation.GetAttachmentWithDefaultValue(constant.SeataXidKey, "")
 	if rpcXid == "" {
-		rpcXid = invocation.GetAttachmentWithDefaultValue(strings.ToLower(common.SeataXidKey), "")
+		rpcXid = invocation.GetAttachmentWithDefaultValue(strings.ToLower(constant.SeataXidKey), "")
 	}
 	return rpcXid
 }
 
 func (*dubboTransactionFilter) getDubboJavaRpcXid(invocation protocol.Invocation) string {
-	rpcXid := invocation.GetAttachmentWithDefaultValue(common.XidKey, "")
+	rpcXid := invocation.GetAttachmentWithDefaultValue(constant.XidKey, "")
 	if rpcXid == "" {
-		rpcXid = invocation.GetAttachmentWithDefaultValue(strings.ToLower(common.XidKey), "")
+		rpcXid = invocation.GetAttachmentWithDefaultValue(strings.ToLower(constant.XidKey), "")
 	}
 	return rpcXid
 }

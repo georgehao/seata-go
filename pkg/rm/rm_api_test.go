@@ -23,7 +23,6 @@ import (
 	"sync"
 
 	"github.com/golang/mock/gomock"
-	"github.com/seata/seata-go/pkg/protocol/branch"
 )
 
 // MockResource is a mock of Resource interface.
@@ -50,10 +49,10 @@ func (m *MockResource) EXPECT() *MockResourceMockRecorder {
 }
 
 // GetBranchType mocks base method.
-func (m *MockResource) GetBranchType() branch.BranchType {
+func (m *MockResource) GetBranchType() int {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBranchType")
-	ret0, _ := ret[0].(branch.BranchType)
+	ret0, _ := ret[0].(int)
 	return ret0
 }
 
@@ -115,10 +114,10 @@ func (m *MockResourceManagerInbound) EXPECT() *MockResourceManagerInboundMockRec
 }
 
 // BranchCommit mocks base method.
-func (m *MockResourceManagerInbound) BranchCommit(ctx context.Context, resource BranchResource) (branch.BranchStatus, error) {
+func (m *MockResourceManagerInbound) BranchCommit(ctx context.Context, resource BranchResource) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BranchCommit", ctx, resource)
-	ret0, _ := ret[0].(branch.BranchStatus)
+	ret0, _ := ret[0].(int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -130,10 +129,10 @@ func (mr *MockResourceManagerInboundMockRecorder) BranchCommit(ctx, resource int
 }
 
 // BranchRollback mocks base method.
-func (m *MockResourceManagerInbound) BranchRollback(ctx context.Context, resource BranchResource) (branch.BranchStatus, error) {
+func (m *MockResourceManagerInbound) BranchRollback(ctx context.Context, resource BranchResource) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BranchRollback", ctx, resource)
-	ret0, _ := ret[0].(branch.BranchStatus)
+	ret0, _ := ret[0].(int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -235,10 +234,10 @@ func (m *MockResourceManager) EXPECT() *MockResourceManagerMockRecorder {
 }
 
 // BranchCommit mocks base method.
-func (m *MockResourceManager) BranchCommit(ctx context.Context, resource BranchResource) (branch.BranchStatus, error) {
+func (m *MockResourceManager) BranchCommit(ctx context.Context, resource BranchResource) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BranchCommit", ctx, resource)
-	ret0, _ := ret[0].(branch.BranchStatus)
+	ret0, _ := ret[0].(int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -279,10 +278,10 @@ func (mr *MockResourceManagerMockRecorder) BranchReport(ctx, param interface{}) 
 }
 
 // BranchRollback mocks base method.
-func (m *MockResourceManager) BranchRollback(ctx context.Context, resource BranchResource) (branch.BranchStatus, error) {
+func (m *MockResourceManager) BranchRollback(ctx context.Context, resource BranchResource) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BranchRollback", ctx, resource)
-	ret0, _ := ret[0].(branch.BranchStatus)
+	ret0, _ := ret[0].(int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -294,10 +293,10 @@ func (mr *MockResourceManagerMockRecorder) BranchRollback(ctx, resource interfac
 }
 
 // GetBranchType mocks base method.
-func (m *MockResourceManager) GetBranchType() branch.BranchType {
+func (m *MockResourceManager) GetBranchType() int {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBranchType")
-	ret0, _ := ret[0].(branch.BranchType)
+	ret0, _ := ret[0].(int)
 	return ret0
 }
 
@@ -388,7 +387,7 @@ func (m *MockResourceManagerGetter) EXPECT() *MockResourceManagerGetterMockRecor
 }
 
 // GetResourceManager mocks base method.
-func (m *MockResourceManagerGetter) GetResourceManager(branchType branch.BranchType) ResourceManager {
+func (m *MockResourceManagerGetter) GetResourceManager(branchType int) ResourceManager {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetResourceManager", branchType)
 	ret0, _ := ret[0].(ResourceManager)

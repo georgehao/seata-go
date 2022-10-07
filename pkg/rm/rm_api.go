@@ -20,20 +20,18 @@ package rm
 import (
 	"context"
 	"sync"
-
-	"github.com/seata/seata-go/pkg/protocol/branch"
 )
 
 // Resource that can be managed by Resource Manager and involved into global transaction
 type Resource interface {
 	GetResourceGroupId() string
 	GetResourceId() string
-	GetBranchType() branch.BranchType
+	GetBranchType() int
 }
 
-// branch resource which contains branch to commit or rollback
+// BranchResource contains branch to commit or rollback
 type BranchResource struct {
-	BranchType      branch.BranchType
+	BranchType      int
 	Xid             string
 	BranchId        int64
 	ResourceId      string
@@ -42,15 +40,15 @@ type BranchResource struct {
 
 // ResourceManagerInbound Control a branch transaction commit or rollback
 type ResourceManagerInbound interface {
-	// Commit a branch transaction
-	BranchCommit(ctx context.Context, resource BranchResource) (branch.BranchStatus, error)
-	// Rollback a branch transaction
-	BranchRollback(ctx context.Context, resource BranchResource) (branch.BranchStatus, error)
+	// BranchCommit Commit a branch transaction
+	BranchCommit(ctx context.Context, resource BranchResource) (int, error)
+	// BranchRollback Rollback a branch transaction
+	BranchRollback(ctx context.Context, resource BranchResource) (int, error)
 }
 
 // BranchRegisterParam Branch register function param for ResourceManager
 type BranchRegisterParam struct {
-	BranchType      branch.BranchType
+	BranchType      int
 	ResourceId      string
 	ClientId        string
 	Xid             string
@@ -60,28 +58,28 @@ type BranchRegisterParam struct {
 
 // BranchReportParam Branch report function param for ResourceManager
 type BranchReportParam struct {
-	BranchType      branch.BranchType
+	BranchType      int
 	Xid             string
 	BranchId        int64
-	Status          branch.BranchStatus
+	Status          int
 	ApplicationData string
 }
 
 // LockQueryParam Lock query function param for ResourceManager
 type LockQueryParam struct {
-	BranchType branch.BranchType
+	BranchType int
 	ResourceId string
 	Xid        string
 	LockKeys   string
 }
 
-// Resource Manager: send outbound request to TC
+// ResourceManagerOutbound send outbound request to TC
 type ResourceManagerOutbound interface {
-	// Branch register long
+	// BranchRegister register long
 	BranchRegister(ctx context.Context, param BranchRegisterParam) (int64, error)
-	//  Branch report
+	// BranchReport Branch report
 	BranchReport(ctx context.Context, param BranchReportParam) error
-	// Lock query boolean
+	// LockQuery Lock query boolean
 	LockQuery(ctx context.Context, param LockQueryParam) (bool, error)
 }
 
@@ -90,16 +88,16 @@ type ResourceManager interface {
 	ResourceManagerInbound
 	ResourceManagerOutbound
 
-	// Register a Resource to be managed by Resource Manager
+	// RegisterResource Register a Resource to be managed by Resource Manager
 	RegisterResource(resource Resource) error
-	//  Unregister a Resource from the Resource Manager
+	// UnregisterResource Unregister a Resource from the Resource Manager
 	UnregisterResource(resource Resource) error
-	// Get all resources managed by this manager
+	// GetCachedResources Get all resources managed by this manager
 	GetCachedResources() *sync.Map
-	// Get the BranchType
-	GetBranchType() branch.BranchType
+	// GetBranchType Get the BranchType
+	GetBranchType() int
 }
 
 type ResourceManagerGetter interface {
-	GetResourceManager(branchType branch.BranchType) ResourceManager
+	GetResourceManager(branchType int) ResourceManager
 }

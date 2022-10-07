@@ -21,13 +21,14 @@ import (
 	"context"
 	"sync"
 
+	"go.uber.org/atomic"
+
 	getty "github.com/apache/dubbo-getty"
-	"github.com/seata/seata-go/pkg/common/log"
 	"github.com/seata/seata-go/pkg/config"
 	"github.com/seata/seata-go/pkg/protocol/codec"
 	"github.com/seata/seata-go/pkg/protocol/message"
 	"github.com/seata/seata-go/pkg/remoting/processor"
-	"go.uber.org/atomic"
+	"github.com/seata/seata-go/pkg/util/log"
 )
 
 var (
@@ -36,7 +37,7 @@ var (
 )
 
 type gettyClientHandler struct {
-	conf           *config.ClientConfig
+	conf           config.Config
 	idGenerator    *atomic.Uint32
 	msgFutures     *sync.Map
 	mergeMsgMap    *sync.Map
@@ -44,11 +45,11 @@ type gettyClientHandler struct {
 	processorMap   map[message.MessageType]processor.RemotingProcessor
 }
 
-func GetGettyClientHandlerInstance() *gettyClientHandler {
+func GetGettyClientHandlerInstance(conf config.Config) *gettyClientHandler {
 	if clientHandler == nil {
 		onceClientHandler.Do(func() {
 			clientHandler = &gettyClientHandler{
-				conf:           config.GetDefaultClientConfig("seata-go"),
+				conf:           conf,
 				idGenerator:    &atomic.Uint32{},
 				msgFutures:     &sync.Map{},
 				mergeMsgMap:    &sync.Map{},

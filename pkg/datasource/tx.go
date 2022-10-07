@@ -1,0 +1,259 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package datasource
+
+import (
+	"context"
+	"database/sql/driver"
+	"github.com/seata/seata-go/pkg/datasource/types"
+	"sync"
+
+	"github.com/pkg/errors"
+
+	"github.com/seata/seata-go/pkg/constant"
+	"github.com/seata/seata-go/pkg/datasource/undo"
+	"github.com/seata/seata-go/pkg/protocol/message"
+	"github.com/seata/seata-go/pkg/util/log"
+)
+
+const REPORT_RETRY_COUNT = 5
+
+var (
+	hl      sync.RWMutex
+	txHooks []txHook
+)
+
+func RegisterTxHook(h txHook) {
+	hl.Lock()
+	defer hl.Unlock()
+
+	txHooks = append(txHooks, h)
+}
+
+func CleanTxHooks() {
+	hl.Lock()
+	defer hl.Unlock()
+
+	txHooks = make([]txHook, 0, 4)
+}
+
+type (
+	txOption func(tx *Tx)
+
+	txHook interface {
+		BeforeCommit(tx *Tx)
+
+		BeforeRollback(tx *Tx)
+	}
+)
+
+func newTx(opts ...txOption) (driver.Tx, error) {
+	tx := new(Tx)
+
+	for i := range opts {
+		opts[i](tx)
+	}
+
+	if err := tx.init(); err != nil {
+		return nil, err
+	}
+
+	return tx, nil
+}
+
+// withDriverConn
+func withDriverConn(conn *Conn) txOption {
+	return func(t *Tx) {
+		t.conn = conn
+	}
+}
+
+// withOriginTx
+func withOriginTx(tx driver.Tx) txOption {
+	return func(t *Tx) {
+		t.target = tx
+	}
+}
+
+// withTxCtx
+func withTxCtx(ctx *types.TransactionContext) txOption {
+	return func(t *Tx) {
+		t.ctx = ctx
+	}
+}
+
+// Tx
+type Tx struct {
+	conn   *Conn
+	ctx    *types.TransactionContext
+	target driver.Tx
+}
+
+// Commit do commit action
+// case 1. no open global-transaction, just do local transaction commit
+// case 2. not need flush undolog, is XA mode, do local transaction commit
+// case 3. need run AT transaction
+func (tx *Tx) Commit() error {
+	if len(txHooks) != 0 {
+		hl.RLock()
+		defer hl.RUnlock()
+
+		for i := range txHooks {
+			txHooks[i].BeforeCommit(tx)
+		}
+	}
+
+	if tx.ctx.TransType == types.Local {
+		return tx.commitOnLocal()
+	}
+
+	// flush undo log if need, is XA mode
+	if tx.ctx.TransType == types.XAMode {
+		return tx.commitOnXA()
+	}
+
+	return tx.commitOnAT()
+}
+
+func (tx *Tx) Rollback() error {
+	if len(txHooks) != 0 {
+		hl.RLock()
+		defer hl.RUnlock()
+
+		for i := range txHooks {
+			txHooks[i].BeforeRollback(tx)
+		}
+	}
+
+	err := tx.target.Rollback()
+	if err != nil {
+		if tx.ctx.OpenGlobalTrsnaction() && tx.ctx.IsBranchRegistered() {
+			tx.report(false)
+		}
+	}
+
+	return err
+}
+
+// init
+func (tx *Tx) init() error {
+	return nil
+}
+
+// commitOnLocal
+func (tx *Tx) commitOnLocal() error {
+	return tx.target.Commit()
+}
+
+// commitOnXA
+func (tx *Tx) commitOnXA() error {
+	return nil
+}
+
+// commitOnAT
+func (tx *Tx) commitOnAT() error {
+	// if TX-Mode is AT, run regis this transaction branch
+	if err := tx.register(tx.ctx); err != nil {
+		return err
+	}
+
+	undoLogMgr, err := undo.GetUndoLogManager(tx.ctx.DbType)
+	if err != nil {
+		return err
+	}
+
+	if err := undoLogMgr.FlushUndoLog(tx.ctx, tx.conn.targetConn); err != nil {
+		if rerr := tx.report(false); rerr != nil {
+			return errors.WithStack(rerr)
+		}
+		return errors.WithStack(err)
+	}
+
+	if err := tx.commitOnLocal(); err != nil {
+		if rerr := tx.report(false); rerr != nil {
+			return errors.WithStack(rerr)
+		}
+		return errors.WithStack(err)
+	}
+
+	tx.report(true)
+	return nil
+}
+
+// register
+func (tx *Tx) register(ctx *types.TransactionContext) error {
+	if !ctx.HasUndoLog() || !ctx.HasLockKey() {
+		return nil
+	}
+	lockKey := ""
+	for _, v := range ctx.LockKeys {
+		lockKey += v + ";"
+	}
+	request := message.BranchRegisterRequest{
+		Xid:             ctx.XaID,
+		BranchType:      int(ctx.TransType),
+		ResourceId:      ctx.ResourceID,
+		LockKey:         lockKey,
+		ApplicationData: nil,
+	}
+	dataSourceManager := datasource.GetDataSourceManager(int(ctx.TransType))
+	branchId, err := dataSourceManager.BranchRegister(context.Background(), "", request)
+	if err != nil {
+		log.Infof("Failed to report branch status: %s", err.Error())
+		return err
+	}
+	ctx.BranchID = uint64(branchId)
+	return nil
+}
+
+// report
+func (tx *Tx) report(success bool) error {
+	if tx.ctx.BranchID == 0 {
+		return nil
+	}
+	status := getStatus(success)
+	request := message.BranchReportRequest{
+		Xid:        tx.ctx.XaID,
+		BranchId:   int64(tx.ctx.BranchID),
+		ResourceId: tx.ctx.ResourceID,
+		Status:     status,
+	}
+	dataSourceManager := datasource.GetDataSourceManager(tx.ctx.TransType)
+	retry := REPORT_RETRY_COUNT
+	for retry > 0 {
+		err := dataSourceManager.BranchReport(context.Background(), request)
+		if err != nil {
+			retry--
+			log.Infof("Failed to report [%s / %s] commit done [%s] Retry Countdown: %s", tx.ctx.BranchID, tx.ctx.XaID, success, retry)
+			if retry == 0 {
+				log.Infof("Failed to report branch status: %s", err.Error())
+				return err
+			}
+		} else {
+			return nil
+		}
+	}
+	return nil
+}
+
+func getStatus(success bool) int {
+	if !success {
+		return constant.BranchStatusPhaseOneFailed
+	}
+	return constant.BranchStatusPhaseOneDone
+}

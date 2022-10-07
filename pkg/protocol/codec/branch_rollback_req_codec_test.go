@@ -20,10 +20,10 @@ package codec
 import (
 	"testing"
 
-	model2 "github.com/seata/seata-go/pkg/protocol/branch"
-
-	"github.com/seata/seata-go/pkg/protocol/message"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/seata/seata-go/pkg/constant"
+	"github.com/seata/seata-go/pkg/protocol/message"
 )
 
 func TestBranchRollbackRequestCodec(t *testing.T) {
@@ -31,7 +31,7 @@ func TestBranchRollbackRequestCodec(t *testing.T) {
 		AbstractBranchEndRequest: message.AbstractBranchEndRequest{
 			Xid:             "123344",
 			BranchId:        56678,
-			BranchType:      model2.BranchTypeSAGA,
+			BranchType:      constant.BranchTypeSAGA,
 			ResourceId:      "1232323",
 			ApplicationData: []byte("TestExtraData"),
 		},

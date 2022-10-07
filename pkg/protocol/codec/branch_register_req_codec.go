@@ -18,10 +18,8 @@
 package codec
 
 import (
-	"github.com/seata/seata-go/pkg/common/bytes"
-
-	model2 "github.com/seata/seata-go/pkg/protocol/branch"
 	"github.com/seata/seata-go/pkg/protocol/message"
+	"github.com/seata/seata-go/pkg/util/bytes"
 )
 
 func init() {
@@ -36,7 +34,7 @@ func (g *BranchRegisterRequestCodec) Decode(in []byte) interface{} {
 	buf := bytes.NewByteBuffer(in)
 
 	data.Xid = bytes.ReadString16Length(buf)
-	data.BranchType = model2.BranchType(bytes.ReadByte(buf))
+	data.BranchType = int(bytes.ReadByte(buf))
 	data.ResourceId = bytes.ReadString16Length(buf)
 	data.LockKey = bytes.ReadString32Length(buf)
 	data.ApplicationData = []byte(bytes.ReadString32Length(buf))

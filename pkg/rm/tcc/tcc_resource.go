@@ -23,9 +23,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/seata/seata-go/pkg/common"
-	"github.com/seata/seata-go/pkg/common/log"
-	"github.com/seata/seata-go/pkg/protocol/branch"
+	"github.com/seata/seata-go/pkg/util/log"
+	"github.com/seata/seata-go/pkg/constant"
 	"github.com/seata/seata-go/pkg/rm"
 	"github.com/seata/seata-go/pkg/rm/tcc/fence/enum"
 	"github.com/seata/seata-go/pkg/tm"
@@ -64,8 +63,8 @@ func (t *TCCResource) GetResourceId() string {
 	return t.TwoPhaseAction.GetActionName()
 }
 
-func (t *TCCResource) GetBranchType() branch.BranchType {
-	return branch.BranchTypeTCC
+func (t *TCCResource) GetBranchType() int {
+	return constant.BranchTypeTCC
 }
 
 func init() {
@@ -123,8 +122,8 @@ func (t *TCCResourceManager) GetCachedResources() *sync.Map {
 	return &t.resourceManagerMap
 }
 
-// Commit a branch transaction
-func (t *TCCResourceManager) BranchCommit(ctx context.Context, branchResource rm.BranchResource) (branch.BranchStatus, error) {
+// BranchCommit Commit a branch transaction
+func (t *TCCResourceManager) BranchCommit(ctx context.Context, branchResource rm.BranchResource) (int, error) {
 	var tccResource *TCCResource
 	if resource, ok := t.resourceManagerMap.Load(branchResource.ResourceId); !ok {
 		err := fmt.Errorf("TCC resource is not exist, resourceId: %s", branchResource.ResourceId)
@@ -143,9 +142,9 @@ func (t *TCCResourceManager) BranchCommit(ctx context.Context, branchResource rm
 
 	_, err := tccResource.TwoPhaseAction.Commit(ctx, businessActionContext)
 	if err != nil {
-		return branch.BranchStatusPhasetwoCommitFailedRetryable, err
+		return constant.BranchStatusPhaseTwoCommitFailedRetryable, err
 	}
-	return branch.BranchStatusPhasetwoCommitted, err
+	return constant.BranchStatusPhaseTwoCommitted, err
 }
 
 func (t *TCCResourceManager) getBusinessActionContext(xid string, branchID int64, resourceID string, applicationData []byte) *tm.BusinessActionContext {
@@ -155,7 +154,7 @@ func (t *TCCResourceManager) getBusinessActionContext(xid string, branchID int64
 		if err := json.Unmarshal(applicationData, &tccContext); err != nil {
 			panic("application data failed to unmarshl as json")
 		}
-		if v, ok := tccContext[common.ActionContext]; ok {
+		if v, ok := tccContext[constant.ActionContext]; ok {
 			actionContextMap = v.(map[string]interface{})
 		}
 	}
@@ -169,7 +168,7 @@ func (t *TCCResourceManager) getBusinessActionContext(xid string, branchID int64
 }
 
 // Rollback a branch transaction
-func (t *TCCResourceManager) BranchRollback(ctx context.Context, branchResource rm.BranchResource) (branch.BranchStatus, error) {
+func (t *TCCResourceManager) BranchRollback(ctx context.Context, branchResource rm.BranchResource) (int, error) {
 	var tccResource *TCCResource
 	if resource, ok := t.resourceManagerMap.Load(branchResource.ResourceId); !ok {
 		err := fmt.Errorf("CC resource is not exist, resourceId: %s", branchResource.ResourceId)
@@ -188,11 +187,11 @@ func (t *TCCResourceManager) BranchRollback(ctx context.Context, branchResource 
 
 	_, err := tccResource.TwoPhaseAction.Rollback(ctx, businessActionContext)
 	if err != nil {
-		return branch.BranchStatusPhasetwoRollbackFailedRetryable, err
+		return constant.BranchStatusPhaseTwoRollbackFailedRetryable, err
 	}
-	return branch.BranchStatusPhasetwoRollbacked, err
+	return constant.BranchStatusPhaseTwoRollbacked, err
 }
 
-func (t *TCCResourceManager) GetBranchType() branch.BranchType {
-	return branch.BranchTypeTCC
+func (t *TCCResourceManager) GetBranchType() int {
+	return constant.BranchTypeTCC
 }

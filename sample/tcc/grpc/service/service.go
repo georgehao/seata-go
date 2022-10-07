@@ -20,7 +20,7 @@ package service
 import (
 	"context"
 
-	"github.com/seata/seata-go/pkg/common/log"
+	"github.com/seata/seata-go/pkg/util/log"
 	"github.com/seata/seata-go/pkg/rm/tcc"
 	"github.com/seata/seata-go/pkg/tm"
 	"github.com/seata/seata-go/sample/tcc/grpc/pb"

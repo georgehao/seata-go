@@ -19,15 +19,13 @@ package message
 
 import (
 	"time"
-
-	model2 "github.com/seata/seata-go/pkg/protocol/branch"
 )
 
 type AbstractBranchEndRequest struct {
 	MessageTypeAware
 	Xid             string
 	BranchId        int64
-	BranchType      model2.BranchType
+	BranchType      int
 	ResourceId      string
 	ApplicationData []byte
 }
@@ -39,7 +37,7 @@ type AbstractGlobalEndRequest struct {
 
 type BranchRegisterRequest struct {
 	Xid             string
-	BranchType      model2.BranchType
+	BranchType      int
 	ResourceId      string
 	LockKey         string
 	ApplicationData []byte
@@ -53,9 +51,9 @@ type BranchReportRequest struct {
 	Xid             string
 	BranchId        int64
 	ResourceId      string
-	Status          model2.BranchStatus
+	Status          int
 	ApplicationData []byte
-	BranchType      model2.BranchType
+	BranchType      int
 }
 
 func (req BranchReportRequest) GetTypeCode() MessageType {
@@ -132,7 +130,7 @@ func (req GlobalRollbackRequest) GetTypeCode() MessageType {
 type UndoLogDeleteRequest struct {
 	ResourceId string
 	SaveDays   MessageType
-	BranchType model2.BranchType
+	BranchType int
 }
 
 func (req UndoLogDeleteRequest) GetTypeCode() MessageType {

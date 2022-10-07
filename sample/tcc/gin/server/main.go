@@ -22,14 +22,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/seata/seata-go/pkg/client"
-	"github.com/seata/seata-go/pkg/common/log"
+	"github.com/seata/seata-go/pkg/util/log"
 	ginmiddleware "github.com/seata/seata-go/pkg/integration/gin"
+	"github.com/seata/seata-go/pkg/rm"
 	"github.com/seata/seata-go/pkg/rm/tcc"
 )
 
 func main() {
-	client.Init()
+	rm.Init()
 
 	r := gin.Default()
 

@@ -20,12 +20,11 @@ package codec
 import (
 	"testing"
 
-	serror "github.com/seata/seata-go/pkg/common/errors"
-
-	model2 "github.com/seata/seata-go/pkg/protocol/branch"
-
-	"github.com/seata/seata-go/pkg/protocol/message"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/seata/seata-go/pkg/constant"
+	"github.com/seata/seata-go/pkg/protocol/message"
+	serror "github.com/seata/seata-go/pkg/util/errors"
 )
 
 func TestBranchRollbackResponseCodec(t *testing.T) {
@@ -33,7 +32,7 @@ func TestBranchRollbackResponseCodec(t *testing.T) {
 		AbstractBranchEndResponse: message.AbstractBranchEndResponse{
 			Xid:          "123344",
 			BranchId:     56678,
-			BranchStatus: model2.BranchStatusPhaseoneFailed,
+			BranchStatus: constant.BranchStatusPhaseOneFailed,
 			AbstractTransactionResponse: message.AbstractTransactionResponse{
 				TransactionErrorCode: serror.TransactionErrorCodeBeginFailed,
 				AbstractResultMessage: message.AbstractResultMessage{

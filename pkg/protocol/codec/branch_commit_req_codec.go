@@ -18,9 +18,8 @@
 package codec
 
 import (
-	"github.com/seata/seata-go/pkg/common/bytes"
-	"github.com/seata/seata-go/pkg/protocol/branch"
 	"github.com/seata/seata-go/pkg/protocol/message"
+	"github.com/seata/seata-go/pkg/util/bytes"
 )
 
 func init() {
@@ -36,7 +35,7 @@ func (g *BranchCommitRequestCodec) Decode(in []byte) interface{} {
 
 	data.Xid = bytes.ReadString16Length(buf)
 	data.BranchId = int64(bytes.ReadUInt64(buf))
-	data.BranchType = branch.BranchType(bytes.ReadByte(buf))
+	data.BranchType = int(bytes.ReadByte(buf))
 	data.ResourceId = bytes.ReadString16Length(buf)
 	data.ApplicationData = []byte(bytes.ReadString32Length(buf))
 

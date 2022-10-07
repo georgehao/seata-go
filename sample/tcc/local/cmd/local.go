@@ -20,14 +20,13 @@ package main
 import (
 	"context"
 
-	"github.com/seata/seata-go/pkg/client"
-	"github.com/seata/seata-go/pkg/common/log"
 	"github.com/seata/seata-go/pkg/tm"
+	"github.com/seata/seata-go/pkg/util/log"
 	"github.com/seata/seata-go/sample/tcc/local/service"
 )
 
 func main() {
-	client.Init()
+	tm.Init()
 	tm.WithGlobalTx(context.Background(), &tm.TransactionInfo{
 		Name: "TccSampleLocalGlobalTx",
 	}, business)

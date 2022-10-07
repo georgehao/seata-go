@@ -22,9 +22,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	serror "github.com/seata/seata-go/pkg/common/errors"
-	model2 "github.com/seata/seata-go/pkg/protocol/branch"
+	"github.com/seata/seata-go/pkg/constant"
 	"github.com/seata/seata-go/pkg/protocol/message"
+	serror "github.com/seata/seata-go/pkg/util/errors"
 )
 
 func TestBranchCommitResponseCodec(t *testing.T) {
@@ -32,7 +32,7 @@ func TestBranchCommitResponseCodec(t *testing.T) {
 		AbstractBranchEndResponse: message.AbstractBranchEndResponse{
 			Xid:          "123344",
 			BranchId:     56678,
-			BranchStatus: model2.BranchStatusPhaseoneFailed,
+			BranchStatus: constant.BranchStatusPhaseOneFailed,
 			AbstractTransactionResponse: message.AbstractTransactionResponse{
 				TransactionErrorCode: serror.TransactionErrorCodeBeginFailed,
 				AbstractResultMessage: message.AbstractResultMessage{

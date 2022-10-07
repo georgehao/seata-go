@@ -17,11 +17,13 @@
 
 package rm
 
+import (
+	"github.com/seata/seata-go/pkg/config"
+	"github.com/seata/seata-go/pkg/util/flagext"
+)
+
 // Init init seata client
 func Init() {
-	initRmClient()
-}
-
-// InitRmClient init seata rm client
-func initRmClient() {
+	var conf config.Config
+	flagext.RegisterFlags(&conf)
 }

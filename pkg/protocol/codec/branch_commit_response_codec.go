@@ -20,11 +20,10 @@ package codec
 import (
 	"math"
 
-	serror "github.com/seata/seata-go/pkg/common/errors"
+	serror "github.com/seata/seata-go/pkg/util/errors"
 
-	"github.com/seata/seata-go/pkg/common/bytes"
-	"github.com/seata/seata-go/pkg/protocol/branch"
 	"github.com/seata/seata-go/pkg/protocol/message"
+	"github.com/seata/seata-go/pkg/util/bytes"
 )
 
 func init() {
@@ -45,7 +44,7 @@ func (g *BranchCommitResponseCodec) Decode(in []byte) interface{} {
 	data.TransactionErrorCode = serror.TransactionErrorCode(bytes.ReadByte(buf))
 	data.Xid = bytes.ReadString16Length(buf)
 	data.BranchId = int64(bytes.ReadUInt64(buf))
-	data.BranchStatus = branch.BranchStatus(bytes.ReadByte(buf))
+	data.BranchStatus = int(bytes.ReadByte(buf))
 
 	return data
 }

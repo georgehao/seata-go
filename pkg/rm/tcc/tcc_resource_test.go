@@ -24,12 +24,12 @@ import (
 	"testing"
 
 	"github.com/agiledragon/gomonkey"
-	"github.com/seata/seata-go/pkg/protocol/branch"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/seata/seata-go/pkg/constant"
 	"github.com/seata/seata-go/pkg/protocol/message"
 	"github.com/seata/seata-go/pkg/remoting/getty"
 	"github.com/seata/seata-go/pkg/rm"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestActionContext(t *testing.T) {
@@ -59,10 +59,10 @@ func TestBranchReport(t *testing.T) {
 
 	err := GetTCCResourceManagerInstance().BranchReport(
 		context.Background(), rm.BranchReportParam{
-			BranchType:      branch.BranchTypeTCC,
+			BranchType:      constant.BranchTypeTCC,
 			Xid:             "1111111111",
 			BranchId:        2645276141,
-			Status:          branch.BranchStatusPhaseoneDone,
+			Status:          constant.BranchStatusPhaseOneDone,
 			ApplicationData: `{"actionContext":{"zhangsan":"lisi"}}`,
 		})
 

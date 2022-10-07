@@ -20,25 +20,19 @@ package tm
 import (
 	"sync"
 
+	"github.com/seata/seata-go/pkg/config"
 	"github.com/seata/seata-go/pkg/remoting/getty"
+	"github.com/seata/seata-go/pkg/util/flagext"
 )
 
 var onceInitTmClient sync.Once
 
-// InitTmClient init seata tm client
-func InitTmClient() {
+// Init init seata tm client
+func Init() {
 	onceInitTmClient.Do(func() {
-		initConfig()
-		initRemoting()
+		var conf config.Config
+		flagext.RegisterFlags(&conf)
+
+		getty.InitRpcClient(&conf)
 	})
-}
-
-// initConfig init config processor
-func initConfig() {
-	// todo implement
-}
-
-// initRemoting init rpc client
-func initRemoting() {
-	getty.InitRpcClient()
 }

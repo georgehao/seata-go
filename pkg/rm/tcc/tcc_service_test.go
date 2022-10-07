@@ -20,6 +20,7 @@ package tcc
 import (
 	"context"
 	"fmt"
+	"github.com/seata/seata-go/pkg/constant"
 	"os"
 	"reflect"
 	"sync"
@@ -29,8 +30,7 @@ import (
 	"github.com/agiledragon/gomonkey"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/seata/seata-go/pkg/common"
-	"github.com/seata/seata-go/pkg/common/log"
+	"github.com/seata/seata-go/pkg/util/log"
 	"github.com/seata/seata-go/pkg/common/net"
 	"github.com/seata/seata-go/pkg/rm"
 	"github.com/seata/seata-go/pkg/tm"
@@ -94,14 +94,14 @@ func TestInitActionContext(t *testing.T) {
 	defer p.Reset()
 	result := testTccServiceProxy.initActionContext(param)
 	assert.Equal(t, map[string]interface{}{
-		"addr":                 "Earth",
-		"Other":                []int8{1, 2, 3},
-		common.ActionStartTime: now.UnixNano() / 1e6,
-		common.PrepareMethod:   "Prepare",
-		common.CommitMethod:    "Commit",
-		common.RollbackMethod:  "Rollback",
-		common.ActionName:      testdata2.ActionName,
-		common.HostName:        net.GetLocalIp(),
+		"addr":                   "Earth",
+		"Other":                  []int8{1, 2, 3},
+		constant.ActionStartTime: now.UnixNano() / 1e6,
+		constant.PrepareMethod:   "Prepare",
+		constant.CommitMethod:    "Commit",
+		constant.RollbackMethod:  "Rollback",
+		constant.ActionName:      testdata2.ActionName,
+		constant.HostName:        net.GetLocalIp(),
 	}, result)
 }
 

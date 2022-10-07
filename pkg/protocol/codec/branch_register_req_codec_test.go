@@ -20,9 +20,10 @@ package codec
 import (
 	"testing"
 
-	"github.com/seata/seata-go/pkg/protocol/branch"
-	"github.com/seata/seata-go/pkg/protocol/message"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/seata/seata-go/pkg/constant"
+	"github.com/seata/seata-go/pkg/protocol/message"
 )
 
 func TestBranchRegisterRequestCodec(t *testing.T) {
@@ -31,7 +32,7 @@ func TestBranchRegisterRequestCodec(t *testing.T) {
 		ResourceId:      "124",
 		LockKey:         "a:1,b:2",
 		ApplicationData: []byte("abc"),
-		BranchType:      branch.BranchTypeTCC,
+		BranchType:      constant.BranchTypeTCC,
 	}
 
 	codec := BranchRegisterRequestCodec{}

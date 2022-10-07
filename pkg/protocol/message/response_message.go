@@ -18,8 +18,7 @@
 package message
 
 import (
-	"github.com/seata/seata-go/pkg/common/errors"
-	model2 "github.com/seata/seata-go/pkg/protocol/branch"
+	"github.com/seata/seata-go/pkg/util/errors"
 )
 
 type AbstractTransactionResponse struct {
@@ -31,7 +30,7 @@ type AbstractBranchEndResponse struct {
 	AbstractTransactionResponse
 	Xid          string
 	BranchId     int64
-	BranchStatus model2.BranchStatus
+	BranchStatus int
 }
 
 type AbstractGlobalEndResponse struct {

@@ -20,8 +20,6 @@ package rm
 import (
 	"fmt"
 	"sync"
-
-	"github.com/seata/seata-go/pkg/protocol/branch"
 )
 
 var (
@@ -48,7 +46,7 @@ func (d *ResourceManagerCache) RegisterResourceManager(resourceManager ResourceM
 	d.resourceManagerMap.Store(resourceManager.GetBranchType(), resourceManager)
 }
 
-func (d *ResourceManagerCache) GetResourceManager(branchType branch.BranchType) ResourceManager {
+func (d *ResourceManagerCache) GetResourceManager(branchType int) ResourceManager {
 	rm, ok := d.resourceManagerMap.Load(branchType)
 	if !ok {
 		panic(fmt.Sprintf("No ResourceManagerCache for BranchType: %v", branchType))
