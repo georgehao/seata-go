@@ -148,3 +148,7 @@ require (
 	moul.io/http2curl v1.0.0 // indirect
 	vimagination.zapto.org/memio v0.0.0-20200222190306-588ebc67b97d // indirect
 )
+
+replace (
+	github.com/transaction-wg/seata-golang => github.com/seata/seata-go
+)
