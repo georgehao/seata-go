@@ -10,6 +10,7 @@ require (
 	github.com/arana-db/parser v0.2.5
 	github.com/bluele/gcache v0.0.2
 	github.com/dsnet/compress v0.0.1
+	github.com/bluele/gcache v0.0.2
 	github.com/dubbogo/gost v1.12.6-0.20220824084206-300e27e9e524
 	github.com/gin-gonic/gin v1.8.0
 	github.com/go-sql-driver/mysql v1.6.0

@@ -17,6 +17,15 @@
 
 package xa
 
+<<<<<<< HEAD
 type XAConnection interface {
 	GetXAResource() (XAResource, error)
+=======
+import (
+	"github.com/seata/seata-go/pkg/datasource/sql/exec"
+)
+
+type XAConnection interface {
+	getXAResource() (exec.XAResource, error)
+>>>>>>> 0d32018 (xa connect manager)
 }
