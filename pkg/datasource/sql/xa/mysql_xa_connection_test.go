@@ -1,6 +1,3 @@
-<<<<<<< HEAD:pkg/datasource/sql/exec/xa/mysql_xa_resource_test.go
-package xa
-=======
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,12 +15,17 @@ package xa
  * limitations under the License.
  */
 
+<<<<<<< HEAD:pkg/datasource/sql/exec/xa/mysql_xa_resource_test.go
 package exec
 >>>>>>> c8dccc9... refactor: use new tm config in tm module. (#411):pkg/datasource/sql/exec/mysql_xa_resource_test.go
+=======
+package xa
+>>>>>>> 737905c... feat: add xa:pkg/datasource/sql/xa/mysql_xa_connection_test.go
 
 import (
 	"context"
 	"database/sql/driver"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -31,7 +33,6 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/pkg/errors"
 
 	"github.com/seata/seata-go/pkg/datasource/sql/mock"
 )
@@ -106,7 +107,7 @@ func TestMysqlXAConn_End(t *testing.T) {
 			name: "tm success",
 			input: args{
 				xid:   "xid",
-				flags: TMSUCCESS,
+				flags: TMSuccess,
 			},
 			wantErr: false,
 		},
@@ -114,7 +115,7 @@ func TestMysqlXAConn_End(t *testing.T) {
 			name: "tm failed",
 			input: args{
 				xid:   "xid",
-				flags: TMFAIL,
+				flags: TMFail,
 			},
 			wantErr: false,
 		},
@@ -152,7 +153,7 @@ func TestMysqlXAConn_Start(t *testing.T) {
 			name: "normal start",
 			input: args{
 				xid:   "xid",
-				flags: TMNOFLAGS,
+				flags: TMNoFlags,
 			},
 			wantErr: false,
 		},
@@ -223,7 +224,7 @@ func TestMysqlXAConn_Recover(t *testing.T) {
 		{
 			name: "normal recover",
 			args: args{
-				flag: TMSTARTRSCAN | TMENDRSCAN,
+				flag: TMStartRScan | TMEndRScan,
 			},
 			want:    []string{"xid", "another_xid"},
 			wantErr: false,
@@ -231,14 +232,14 @@ func TestMysqlXAConn_Recover(t *testing.T) {
 		{
 			name: "invalid flag for recover",
 			args: args{
-				flag: TMFAIL,
+				flag: TMFail,
 			},
 			wantErr: true,
 		},
 		{
 			name: "valid flag for recover but don't scan",
 			args: args{
-				flag: TMENDRSCAN,
+				flag: TMEndRScan,
 			},
 			want:    nil,
 			wantErr: false,

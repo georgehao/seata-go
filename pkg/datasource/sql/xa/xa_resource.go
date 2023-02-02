@@ -80,6 +80,8 @@ const (
 )
 
 type XAResource interface {
+	XAConnection
+
 	Commit(xid string, onePhase bool) error
 	End(xid string, flags int) error
 	Forget(xid string) error
