@@ -15,12 +15,7 @@
  * limitations under the License.
  */
 
-<<<<<<< HEAD:pkg/datasource/sql/exec/xa/mysql_xa_resource_test.go
-package exec
->>>>>>> c8dccc9... refactor: use new tm config in tm module. (#411):pkg/datasource/sql/exec/mysql_xa_resource_test.go
-=======
 package xa
->>>>>>> 737905c... feat: add xa:pkg/datasource/sql/xa/mysql_xa_connection_test.go
 
 import (
 	"context"
