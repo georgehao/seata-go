@@ -15,27 +15,42 @@
  * limitations under the License.
  */
 
-package client
+package loadbalance
 
 import (
-	"context"
+	"strings"
+	"sync"
 
-	"github.com/seata/seata-go/pkg/protocol/message"
-	"github.com/seata/seata-go/pkg/remoting/getty"
-	"github.com/seata/seata-go/pkg/util/log"
+	getty "github.com/apache/dubbo-getty"
 )
 
-func initHeartBeat(listener *getty.GettyClientHandler) {
-	listener.RegisterProcessor(message.MessageTypeHeartbeatMsg, &clientHeartBeatProcessor{})
-}
+func XidLoadBalance(sessions *sync.Map, xid string) getty.Session {
+	var session getty.Session
 
-type clientHeartBeatProcessor struct{}
-
-func (f *clientHeartBeatProcessor) Process(ctx context.Context, rpcMessage message.RpcMessage) error {
-	if msg, ok := rpcMessage.Body.(message.HeartBeatMessage); ok {
-		if !msg.Ping {
-			log.Debug("received PONG from {}", ctx)
-		}
+	// ip:port:transactionId
+	tmpSplits := strings.Split(xid, ":")
+	if len(tmpSplits) == 3 {
+		ip := tmpSplits[0]
+		port := tmpSplits[1]
+		ipPort := ip + ":" + port
+		sessions.Range(func(key, value interface{}) bool {
+			tmpSession := key.(getty.Session)
+			if tmpSession.IsClosed() {
+				sessions.Delete(tmpSession)
+				return true
+			}
+			connectedIpPort := session.RemoteAddr()
+			if ipPort == connectedIpPort {
+				session = tmpSession
+				return false
+			}
+			return true
+		})
 	}
-	return nil
+
+	if session == nil {
+		return RandomLoadBalance(sessions, xid)
+	}
+
+	return session
 }

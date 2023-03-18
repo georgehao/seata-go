@@ -25,7 +25,6 @@ import (
 	"github.com/seata/seata-go/pkg/datasource/sql/exec/config"
 	"github.com/seata/seata-go/pkg/integration"
 	"github.com/seata/seata-go/pkg/remoting/getty"
-	"github.com/seata/seata-go/pkg/remoting/processor/client"
 	"github.com/seata/seata-go/pkg/rm"
 	"github.com/seata/seata-go/pkg/rm/tcc"
 	"github.com/seata/seata-go/pkg/tm"
@@ -80,7 +79,6 @@ func initRmClient(cfg *Config) {
 			TxServiceGroup: cfg.TxServiceGroup,
 		})
 		config.Init(cfg.ClientConfig.RmConfig.LockConfig)
-		client.RegisterProcessor()
 		integration.Init()
 		tcc.InitTCC()
 		at.InitAT(cfg.ClientConfig.UndoConfig, cfg.AsyncWorkerConfig)

@@ -18,49 +18,45 @@
 package getty
 
 import (
+	"errors"
 	"fmt"
 
+	getty "github.com/apache/dubbo-getty"
 	"github.com/seata/seata-go/pkg/util/bytes"
 
-	getty "github.com/apache/dubbo-getty"
-	"github.com/pkg/errors"
 	"github.com/seata/seata-go/pkg/protocol/codec"
 	"github.com/seata/seata-go/pkg/protocol/message"
 )
 
-/**
- * <pre>
- * 0     1     2     3     4     5     6     7     8     9    10     11    12    13    14    15    16
- * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
- * |   magic   |Proto |     Full length      |    Head   | Msg |Seria|Compr|     RequestID         |
- * |   code    |clVer |    (head+body)       |   Length  |Type |lizer|ess  |                       |
- * +-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+
- * |                                                                                               |
- * |                                   Head Map [Optional]                                         |
- * +-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+
- * |                                                                                               |
- * |                                         body                                                  |
- * |                                                                                               |
- * |                                        ... ...                                                |
- * +-----------------------------------------------------------------------------------------------+
- * </pre>
- * <p>
- * <li>Full Length: include all data </li>
- * <li>Head Length: include head data from magic code to head map. </li>
- * <li>Body Length: Full Length - Head Length</li>
- * </p>
- * https://github.com/seata/seata/issues/893
- */
+// <pre>
+// 0     1     2     3     4     5     6     7     8     9    10     11    12    13    14    15    16
+// +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+// |   magic   |Proto |     Full length      |    Head   | Msg |Seria|Compr|     RequestID         |
+// |   code    |clVer |    (head+body)       |   Length  |Type |lizer|ess  |                       |
+// +-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+
+// |                                                                                               |
+// |                                   Head Map [Optional]                                         |
+// +-----------+-----------+-----------+-----------+-----------+-----------+-----------+-----------+
+// |                                                                                               |
+// |                                         body                                                  |
+// |                                                                                               |
+// |                                        ... ...                                                |
+// +-----------------------------------------------------------------------------------------------+
+// </pre>
+// <p>
+// <li>Full Length: include all data </li>
+// <li>Head Length: include head data from magic code to head map. </li>
+// <li>Body Length: Full Length - Head Length</li>
+// </p>
+// https://github.com/seata/seata/issues/893
+
 const (
 	Seatav1HeaderLength = 16
 )
 
 var (
-	magics        = []uint8{0xda, 0xda}
-	rpcPkgHandler = &RpcPackageHandler{}
-)
+	magics = []uint8{0xda, 0xda}
 
-var (
 	ErrNotEnoughStream = errors.New("packet stream is not enough")
 	ErrTooLargePackage = errors.New("package length is exceed the getty package's legal maximum length.")
 	ErrInvalidPackage  = errors.New("invalid rpc package")

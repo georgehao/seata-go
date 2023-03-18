@@ -17,10 +17,14 @@
 
 package client
 
+import (
+	"github.com/seata/seata-go/pkg/remoting/getty"
+)
+
 // RegisterProcessor register processor
-func RegisterProcessor() {
-	initHeartBeat()
-	initOnResponse()
-	initBranchCommit()
-	initBranchRollback()
+func RegisterProcessor(listener *getty.GettyClientHandler, gettyClient *getty.GettyRemotingClient) {
+	initHeartBeat(listener)
+	initOnResponse(listener, gettyClient)
+	initBranchCommit(listener, gettyClient)
+	initBranchRollback(listener, gettyClient)
 }

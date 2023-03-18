@@ -28,45 +28,36 @@ import (
 	"github.com/seata/seata-go/pkg/util/log"
 )
 
-const (
-	RpcRequestTimeout = 20 * time.Second
-)
+const RpcRequestTimeout = 20 * time.Second
 
-var (
-	gettyRemoting     *GettyRemoting
-	onceGettyRemoting = &sync.Once{}
-)
+type callbackMethod func(reqMsg message.RpcMessage, respMsg *message.MessageFuture) (interface{}, error)
 
-type (
-	callbackMethod func(reqMsg message.RpcMessage, respMsg *message.MessageFuture) (interface{}, error)
-	GettyRemoting  struct {
-		futures     *sync.Map
-		mergeMsgMap *sync.Map
+type GettyRemoting struct {
+	futures         *sync.Map
+	mergeMsgMap     *sync.Map
+	sessionManager  *SessionManager
+	loadBalanceType string
+}
+
+func newGettyRemotingInstance(loadBalanceType string, manager *SessionManager) *GettyRemoting {
+	return &GettyRemoting{
+		loadBalanceType: loadBalanceType,
+		futures:         &sync.Map{},
+		mergeMsgMap:     &sync.Map{},
+		sessionManager:  manager,
 	}
-)
-
-func GetGettyRemotingInstance() *GettyRemoting {
-	if gettyRemoting == nil {
-		onceGettyRemoting.Do(func() {
-			gettyRemoting = &GettyRemoting{
-				futures:     &sync.Map{},
-				mergeMsgMap: &sync.Map{},
-			}
-		})
-	}
-	return gettyRemoting
 }
 
 func (g *GettyRemoting) SendSync(msg message.RpcMessage, s getty.Session, callback callbackMethod) (interface{}, error) {
 	if s == nil {
-		s = sessionManager.selectSession()
+		s = g.sessionManager.selectSession(msg.Body, g.loadBalanceType)
 	}
 	return g.sendAsync(s, msg, callback)
 }
 
 func (g *GettyRemoting) SendASync(msg message.RpcMessage, s getty.Session, callback callbackMethod) error {
 	if s == nil {
-		s = sessionManager.selectSession()
+		s = g.sessionManager.selectSession(msg.Body, g.loadBalanceType)
 	}
 	_, err := g.sendAsync(s, msg, callback)
 	return err
@@ -121,13 +112,13 @@ func (g *GettyRemoting) GetMergedMessage(msgID int32) *message.MergedWarpMessage
 
 func (g *GettyRemoting) NotifyRpcMessageResponse(rpcMessage message.RpcMessage) {
 	messageFuture := g.GetMessageFuture(rpcMessage.ID)
-	if messageFuture != nil {
-		messageFuture.Response = rpcMessage.Body
-		// todo add messageFuture.Err
-		// messageFuture.Err = rpcMessage.Err
-		messageFuture.Done <- struct{}{}
-		// client.msgFutures.Delete(rpcMessage.RequestID)
-	} else {
+	if messageFuture == nil {
 		log.Infof("msg: {} is not found in msgFutures.", rpcMessage.ID)
 	}
+
+	messageFuture.Response = rpcMessage.Body
+	// todo add messageFuture.Err
+	// messageFuture.Err = rpcMessage.Err
+	messageFuture.Done <- struct{}{}
+	// client.msgFutures.Delete(rpcMessage.RequestID)
 }

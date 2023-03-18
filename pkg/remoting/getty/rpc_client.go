@@ -20,16 +20,16 @@ package getty
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/seata/seata-go/pkg/remoting/processor/client"
 	"net"
 	"strings"
 	"sync"
 
+	getty "github.com/apache/dubbo-getty"
+	gxsync "github.com/dubbogo/gost/sync"
+
 	"github.com/seata/seata-go/pkg/protocol/codec"
 	"github.com/seata/seata-go/pkg/util/log"
-
-	getty "github.com/apache/dubbo-getty"
-
-	gxsync "github.com/dubbogo/gost/sync"
 )
 
 type RpcClient struct {
@@ -37,6 +37,11 @@ type RpcClient struct {
 	seataConf    *SeataConfig
 	gettyClients []getty.Client
 	futures      *sync.Map
+
+	eventListener  *GettyClientHandler
+	rpcPkgHandler  *RpcPackageHandler
+	sessionMgr     *SessionManager
+	remotingClient *GettyRemotingClient
 }
 
 func InitRpcClient(gettyConfig *Config, seataConfig *SeataConfig) {
@@ -51,10 +56,18 @@ func InitRpcClient(gettyConfig *Config, seataConfig *SeataConfig) {
 }
 
 func (c *RpcClient) init() {
+	c.sessionMgr = newSessionManager()
+	c.rpcPkgHandler = &RpcPackageHandler{}
+	c.remotingClient = newGettyRemotingClient(c.gettyConf.LoadBalanceType, c.sessionMgr)
+	c.eventListener = newGettyClientHandler(c.sessionMgr, c.remotingClient)
+
+	client.RegisterProcessor(c.eventListener, c.remotingClient)
+
 	addressList := c.getAvailServerList()
 	if len(addressList) == 0 {
 		log.Warn("no have valid seata server list")
 	}
+
 	for _, address := range addressList {
 		gettyClient := getty.NewTCPClient(
 			getty.WithServerAddress(address),
@@ -137,8 +150,8 @@ func (c *RpcClient) newSession(session getty.Session) error {
 func (c *RpcClient) setSessionConfig(session getty.Session) {
 	session.SetName(c.gettyConf.SessionConfig.SessionName)
 	session.SetMaxMsgLen(c.gettyConf.SessionConfig.MaxMsgLen)
-	session.SetPkgHandler(rpcPkgHandler)
-	session.SetEventListener(GetGettyClientHandlerInstance())
+	session.SetPkgHandler(c.rpcPkgHandler)
+	session.SetEventListener(c.eventListener)
 	session.SetReadTimeout(c.gettyConf.SessionConfig.TCPReadTimeout)
 	session.SetWriteTimeout(c.gettyConf.SessionConfig.TCPWriteTimeout)
 	session.SetCronPeriod((int)(c.gettyConf.SessionConfig.CronPeriod.Milliseconds()))

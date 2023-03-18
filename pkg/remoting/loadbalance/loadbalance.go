@@ -15,27 +15,28 @@
  * limitations under the License.
  */
 
-package client
+package loadbalance
 
 import (
-	"context"
-
-	"github.com/seata/seata-go/pkg/protocol/message"
-	"github.com/seata/seata-go/pkg/remoting/getty"
-	"github.com/seata/seata-go/pkg/util/log"
+	getty "github.com/apache/dubbo-getty"
+	"sync"
 )
 
-func initHeartBeat(listener *getty.GettyClientHandler) {
-	listener.RegisterProcessor(message.MessageTypeHeartbeatMsg, &clientHeartBeatProcessor{})
-}
+const (
+	randomLoadBalance         = "RandomLoadBalance"
+	xidLoadBalance            = "XID"
+	roundRobinLoadBalance     = "RoundRobinLoadBalance"
+	consistentHashLoadBalance = "ConsistentHashLoadBalance"
+	leastActiveLoadBalance    = "LeastActiveLoadBalance"
+)
 
-type clientHeartBeatProcessor struct{}
-
-func (f *clientHeartBeatProcessor) Process(ctx context.Context, rpcMessage message.RpcMessage) error {
-	if msg, ok := rpcMessage.Body.(message.HeartBeatMessage); ok {
-		if !msg.Ping {
-			log.Debug("received PONG from {}", ctx)
-		}
+func Select(loadBalanceType string, sessions *sync.Map, xid string) getty.Session {
+	switch loadBalanceType {
+	case randomLoadBalance:
+		return RandomLoadBalance(sessions, xid)
+	case xidLoadBalance:
+		return XidLoadBalance(sessions, xid)
+	default:
+		return RandomLoadBalance(sessions, xid)
 	}
-	return nil
 }

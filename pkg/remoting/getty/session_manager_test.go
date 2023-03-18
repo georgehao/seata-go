@@ -15,27 +15,10 @@
  * limitations under the License.
  */
 
-package client
+package getty
 
-import (
-	"context"
+import "testing"
 
-	"github.com/seata/seata-go/pkg/protocol/message"
-	"github.com/seata/seata-go/pkg/remoting/getty"
-	"github.com/seata/seata-go/pkg/util/log"
-)
+func TestGetXid(t *testing.T) {
 
-func initHeartBeat(listener *getty.GettyClientHandler) {
-	listener.RegisterProcessor(message.MessageTypeHeartbeatMsg, &clientHeartBeatProcessor{})
-}
-
-type clientHeartBeatProcessor struct{}
-
-func (f *clientHeartBeatProcessor) Process(ctx context.Context, rpcMessage message.RpcMessage) error {
-	if msg, ok := rpcMessage.Body.(message.HeartBeatMessage); ok {
-		if !msg.Ping {
-			log.Debug("received PONG from {}", ctx)
-		}
-	}
-	return nil
 }

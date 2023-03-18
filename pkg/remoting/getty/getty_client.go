@@ -19,36 +19,29 @@ package getty
 
 import (
 	"fmt"
-	"sync"
 
+	getty "github.com/apache/dubbo-getty"
 	gxtime "github.com/dubbogo/gost/time"
+	"go.uber.org/atomic"
+
 	"github.com/seata/seata-go/pkg/protocol/codec"
 	"github.com/seata/seata-go/pkg/protocol/message"
 	"github.com/seata/seata-go/pkg/util/log"
-	"go.uber.org/atomic"
-)
-
-var (
-	gettyRemotingClient     *GettyRemotingClient
-	onceGettyRemotingClient = &sync.Once{}
 )
 
 type GettyRemotingClient struct {
 	idGenerator *atomic.Uint32
+	remoting    *GettyRemoting
 }
 
-func GetGettyRemotingClient() *GettyRemotingClient {
-	if gettyRemotingClient == nil {
-		onceGettyRemotingClient.Do(func() {
-			gettyRemotingClient = &GettyRemotingClient{
-				idGenerator: &atomic.Uint32{},
-			}
-		})
+func newGettyRemotingClient(loadBalanceType string, smgr *SessionManager) *GettyRemotingClient {
+	return &GettyRemotingClient{
+		idGenerator: &atomic.Uint32{},
+		remoting:    newGettyRemotingInstance(loadBalanceType, smgr),
 	}
-	return gettyRemotingClient
 }
 
-func (client *GettyRemotingClient) SendAsyncRequest(msg interface{}) error {
+func (client *GettyRemotingClient) SendAsyncRequest(msg interface{}, session getty.Session) error {
 	var msgType message.GettyRequestType
 	if _, ok := msg.(message.HeartBeatMessage); ok {
 		msgType = message.GettyRequestTypeHeartbeatRequest
@@ -62,7 +55,7 @@ func (client *GettyRemotingClient) SendAsyncRequest(msg interface{}) error {
 		Compressor: 0,
 		Body:       msg,
 	}
-	return GetGettyRemotingInstance().SendASync(rpcMessage, nil, client.asyncCallback)
+	return client.remoting.SendASync(rpcMessage, session, client.asyncCallback)
 }
 
 func (client *GettyRemotingClient) SendAsyncResponse(msgID int32, msg interface{}) error {
@@ -73,7 +66,7 @@ func (client *GettyRemotingClient) SendAsyncResponse(msgID int32, msg interface{
 		Compressor: 0,
 		Body:       msg,
 	}
-	return GetGettyRemotingInstance().SendASync(rpcMessage, nil, nil)
+	return client.remoting.SendASync(rpcMessage, nil, nil)
 }
 
 func (client *GettyRemotingClient) SendSyncRequest(msg interface{}) (interface{}, error) {
@@ -84,21 +77,41 @@ func (client *GettyRemotingClient) SendSyncRequest(msg interface{}) (interface{}
 		Compressor: 0,
 		Body:       msg,
 	}
-	return GetGettyRemotingInstance().SendSync(rpcMessage, nil, client.syncCallback)
+	return client.remoting.SendSync(rpcMessage, nil, client.syncCallback)
 }
 
-func (g *GettyRemotingClient) asyncCallback(reqMsg message.RpcMessage, respMsg *message.MessageFuture) (interface{}, error) {
-	go g.syncCallback(reqMsg, respMsg)
+func (client *GettyRemotingClient) asyncCallback(reqMsg message.RpcMessage, respMsg *message.MessageFuture) (interface{}, error) {
+	go client.syncCallback(reqMsg, respMsg)
 	return nil, nil
 }
 
-func (g *GettyRemotingClient) syncCallback(reqMsg message.RpcMessage, respMsg *message.MessageFuture) (interface{}, error) {
+func (client *GettyRemotingClient) syncCallback(reqMsg message.RpcMessage, respMsg *message.MessageFuture) (interface{}, error) {
 	select {
 	case <-gxtime.GetDefaultTimerWheel().After(RpcRequestTimeout):
-		GetGettyRemotingInstance().RemoveMergedMessageFuture(reqMsg.ID)
+		client.remoting.RemoveMergedMessageFuture(reqMsg.ID)
 		log.Errorf("wait resp timeout: %#v", reqMsg)
 		return nil, fmt.Errorf("wait response timeout, request: %#v", reqMsg)
 	case <-respMsg.Done:
 		return respMsg.Response, respMsg.Err
 	}
+}
+
+func (client *GettyRemotingClient) GetMergedMessage(msgID int32) *message.MergedWarpMessage {
+	return client.remoting.GetMergedMessage(msgID)
+}
+
+func (client *GettyRemotingClient) GetMessageFuture(msgID int32) *message.MessageFuture {
+	return client.remoting.GetMessageFuture(msgID)
+}
+
+func (client *GettyRemotingClient) RemoveMessageFuture(msgID int32) {
+	client.remoting.RemoveMessageFuture(msgID)
+}
+
+func (client *GettyRemotingClient) RemoveMergedMessageFuture(msgID int32) {
+	client.remoting.RemoveMergedMessageFuture(msgID)
+}
+
+func (client *GettyRemotingClient) NotifyRpcMessageResponse(rpcMessage message.RpcMessage) {
+	client.remoting.NotifyRpcMessageResponse(rpcMessage)
 }

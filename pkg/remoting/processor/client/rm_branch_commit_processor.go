@@ -21,18 +21,21 @@ import (
 	"context"
 
 	"github.com/seata/seata-go/pkg/protocol/message"
-	"github.com/seata/seata-go/pkg/util/log"
-
 	"github.com/seata/seata-go/pkg/remoting/getty"
 	"github.com/seata/seata-go/pkg/rm"
+	"github.com/seata/seata-go/pkg/util/log"
 )
 
-func initBranchCommit() {
-	rmBranchCommitProcessor := &rmBranchCommitProcessor{}
-	getty.GetGettyClientHandlerInstance().RegisterProcessor(message.MessageTypeBranchCommit, rmBranchCommitProcessor)
+func initBranchCommit(eventLister *getty.GettyClientHandler, remoteClient *getty.GettyRemotingClient) {
+	rmBranchCommitProcessor := &rmBranchCommitProcessor{
+		remoteClient: remoteClient,
+	}
+	eventLister.RegisterProcessor(message.MessageTypeBranchCommit, rmBranchCommitProcessor)
 }
 
-type rmBranchCommitProcessor struct{}
+type rmBranchCommitProcessor struct {
+	remoteClient *getty.GettyRemotingClient
+}
 
 func (f *rmBranchCommitProcessor) Process(ctx context.Context, rpcMessage message.RpcMessage) error {
 	log.Infof("the rm client received  rmBranchCommit msg %#v from tc server.", rpcMessage)
@@ -82,7 +85,7 @@ func (f *rmBranchCommitProcessor) Process(ctx context.Context, rpcMessage messag
 			BranchStatus: status,
 		},
 	}
-	err = getty.GetGettyRemotingClient().SendAsyncResponse(rpcMessage.ID, response)
+	err = f.remoteClient.SendAsyncResponse(rpcMessage.ID, response)
 	if err != nil {
 		log.Errorf("send branch commit response error: {%#v}", err.Error())
 		return err

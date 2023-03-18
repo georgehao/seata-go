@@ -22,43 +22,36 @@ import (
 	"sync"
 
 	getty "github.com/apache/dubbo-getty"
+	"go.uber.org/atomic"
+
 	"github.com/seata/seata-go/pkg/constant"
-	"github.com/seata/seata-go/pkg/protocol/codec"
 	"github.com/seata/seata-go/pkg/protocol/message"
 	"github.com/seata/seata-go/pkg/remoting/processor"
 	"github.com/seata/seata-go/pkg/util/log"
-	"go.uber.org/atomic"
 )
 
-var (
-	clientHandler     *gettyClientHandler
-	onceClientHandler = &sync.Once{}
-)
+type GettyClientHandler struct {
+	idGenerator  *atomic.Uint32
+	msgFutures   *sync.Map
+	mergeMsgMap  *sync.Map
+	processorMap map[message.MessageType]processor.RemotingProcessor
 
-type gettyClientHandler struct {
-	idGenerator    *atomic.Uint32
-	msgFutures     *sync.Map
-	mergeMsgMap    *sync.Map
 	sessionManager *SessionManager
-	processorMap   map[message.MessageType]processor.RemotingProcessor
+	gettyClient    *GettyRemotingClient
 }
 
-func GetGettyClientHandlerInstance() *gettyClientHandler {
-	if clientHandler == nil {
-		onceClientHandler.Do(func() {
-			clientHandler = &gettyClientHandler{
-				idGenerator:    &atomic.Uint32{},
-				msgFutures:     &sync.Map{},
-				mergeMsgMap:    &sync.Map{},
-				sessionManager: sessionManager,
-				processorMap:   make(map[message.MessageType]processor.RemotingProcessor, 0),
-			}
-		})
+func newGettyClientHandler(manager *SessionManager, gettyClient *GettyRemotingClient) *GettyClientHandler {
+	return &GettyClientHandler{
+		idGenerator:    &atomic.Uint32{},
+		msgFutures:     &sync.Map{},
+		mergeMsgMap:    &sync.Map{},
+		sessionManager: manager,
+		gettyClient:    gettyClient,
+		processorMap:   make(map[message.MessageType]processor.RemotingProcessor, 0),
 	}
-	return clientHandler
 }
 
-func (g *gettyClientHandler) OnOpen(session getty.Session) error {
+func (g *GettyClientHandler) OnOpen(session getty.Session) error {
 	log.Infof("Open new getty session ")
 	g.sessionManager.registerSession(session)
 	conf := getSeataConfig()
@@ -68,7 +61,7 @@ func (g *gettyClientHandler) OnOpen(session getty.Session) error {
 			ApplicationId:           conf.ApplicationID,
 			TransactionServiceGroup: conf.TxServiceGroup,
 		}}
-		err := GetGettyRemotingClient().SendAsyncRequest(request)
+		err := g.gettyClient.SendAsyncRequest(request, nil)
 		if err != nil {
 			log.Errorf("OnOpen error: {%#v}", err.Error())
 			g.sessionManager.releaseSession(session)
@@ -79,17 +72,17 @@ func (g *gettyClientHandler) OnOpen(session getty.Session) error {
 	return nil
 }
 
-func (g *gettyClientHandler) OnError(session getty.Session, err error) {
+func (g *GettyClientHandler) OnError(session getty.Session, err error) {
 	log.Infof("session{%s} got error{%v}, will be closed.", session.Stat(), err)
 	g.sessionManager.releaseSession(session)
 }
 
-func (g *gettyClientHandler) OnClose(session getty.Session) {
+func (g *GettyClientHandler) OnClose(session getty.Session) {
 	log.Infof("session{%s} is closing......", session.Stat())
 	g.sessionManager.releaseSession(session)
 }
 
-func (g *gettyClientHandler) OnMessage(session getty.Session, pkg interface{}) {
+func (g *GettyClientHandler) OnMessage(session getty.Session, pkg interface{}) {
 	ctx := context.Background()
 	log.Debug("received message: {%#v}", pkg)
 
@@ -111,23 +104,16 @@ func (g *gettyClientHandler) OnMessage(session getty.Session, pkg interface{}) {
 	}
 }
 
-func (g *gettyClientHandler) OnCron(session getty.Session) {
+func (g *GettyClientHandler) OnCron(session getty.Session) {
 	log.Debug("session{%s} Oncron executing", session.Stat())
 	g.transferBeatHeart(session, message.HeartBeatMessagePing)
 }
 
-func (g *gettyClientHandler) transferBeatHeart(session getty.Session, msg message.HeartBeatMessage) {
-	rpcMessage := message.RpcMessage{
-		ID:         int32(g.idGenerator.Inc()),
-		Type:       message.GettyRequestTypeHeartbeatRequest,
-		Codec:      byte(codec.CodecTypeSeata),
-		Compressor: 0,
-		Body:       msg,
-	}
-	GetGettyRemotingInstance().SendASync(rpcMessage, session, nil)
+func (g *GettyClientHandler) transferBeatHeart(session getty.Session, msg message.HeartBeatMessage) {
+	g.gettyClient.SendAsyncRequest(msg, session)
 }
 
-func (g *gettyClientHandler) RegisterProcessor(msgType message.MessageType, processor processor.RemotingProcessor) {
+func (g *GettyClientHandler) RegisterProcessor(msgType message.MessageType, processor processor.RemotingProcessor) {
 	if nil != processor {
 		g.processorMap[msgType] = processor
 	}

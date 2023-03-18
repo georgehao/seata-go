@@ -23,14 +23,25 @@ import (
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
+	getty "github.com/apache/dubbo-getty"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/seata/seata-go/pkg/protocol/codec"
 	"github.com/seata/seata-go/pkg/protocol/message"
 	"github.com/seata/seata-go/pkg/util/log"
-
-	getty "github.com/apache/dubbo-getty"
-	"github.com/stretchr/testify/assert"
 )
+
+var remoting *GettyRemoting
+
+func setup() {
+	sgr := newSessionManager()
+	remoting = newGettyRemotingInstance("XID", sgr)
+}
+
+func TestMain(m *testing.M) {
+	setup()
+	m.Run()
+}
 
 // TestGettyRemotingClient_SendSyncRequest unit test for SendSyncRequest function
 func TestGettyRemotingClient_SendSyncRequest(t *testing.T) {
@@ -41,12 +52,13 @@ func TestGettyRemotingClient_SendSyncRequest(t *testing.T) {
 			},
 		},
 	}
-	gomonkey.ApplyMethod(reflect.TypeOf(GetGettyRemotingInstance()), "SendSync",
+	gomonkey.ApplyMethod(reflect.TypeOf(remoting), "SendSync",
 		func(_ *GettyRemoting, msg message.RpcMessage, s getty.Session, callback callbackMethod) (interface{},
 			error) {
 			return respMsg, nil
 		})
-	resp, err := GetGettyRemotingClient().SendSyncRequest("message")
+
+	resp, err := remoting.("message", nil, )
 	assert.Empty(t, err)
 	assert.Equal(t, respMsg, resp.(message.GlobalBeginResponse))
 }

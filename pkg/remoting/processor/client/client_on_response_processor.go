@@ -21,52 +21,56 @@ import (
 	"context"
 
 	"github.com/seata/seata-go/pkg/protocol/message"
-	"github.com/seata/seata-go/pkg/util/log"
-
 	"github.com/seata/seata-go/pkg/remoting/getty"
+	"github.com/seata/seata-go/pkg/util/log"
 )
 
-func initOnResponse() {
-	clientOnResponseProcessor := &clientOnResponseProcessor{}
-	getty.GetGettyClientHandlerInstance().RegisterProcessor(message.MessageTypeSeataMergeResult, clientOnResponseProcessor)
-	getty.GetGettyClientHandlerInstance().RegisterProcessor(message.MessageTypeBranchRegisterResult, clientOnResponseProcessor)
-	getty.GetGettyClientHandlerInstance().RegisterProcessor(message.MessageTypeBranchStatusReportResult, clientOnResponseProcessor)
-	getty.GetGettyClientHandlerInstance().RegisterProcessor(message.MessageTypeGlobalLockQueryResult, clientOnResponseProcessor)
-	getty.GetGettyClientHandlerInstance().RegisterProcessor(message.MessageTypeRegRmResult, clientOnResponseProcessor)
-	getty.GetGettyClientHandlerInstance().RegisterProcessor(message.MessageTypeGlobalBeginResult, clientOnResponseProcessor)
-	getty.GetGettyClientHandlerInstance().RegisterProcessor(message.MessageTypeGlobalCommitResult, clientOnResponseProcessor)
+func initOnResponse(eventLister *getty.GettyClientHandler, gettyClient *getty.GettyRemotingClient) {
+	clientOnResponseProcessor := &clientOnResponseProcessor{
+		gettyClient: gettyClient,
+	}
 
-	getty.GetGettyClientHandlerInstance().RegisterProcessor(message.MessageTypeGlobalReportResult, clientOnResponseProcessor)
-	getty.GetGettyClientHandlerInstance().RegisterProcessor(message.MessageTypeGlobalRollbackResult, clientOnResponseProcessor)
-	getty.GetGettyClientHandlerInstance().RegisterProcessor(message.MessageTypeGlobalStatusResult, clientOnResponseProcessor)
-	getty.GetGettyClientHandlerInstance().RegisterProcessor(message.MessageTypeRegCltResult, clientOnResponseProcessor)
+	eventLister.RegisterProcessor(message.MessageTypeSeataMergeResult, clientOnResponseProcessor)
+	eventLister.RegisterProcessor(message.MessageTypeBranchRegisterResult, clientOnResponseProcessor)
+	eventLister.RegisterProcessor(message.MessageTypeBranchStatusReportResult, clientOnResponseProcessor)
+	eventLister.RegisterProcessor(message.MessageTypeGlobalLockQueryResult, clientOnResponseProcessor)
+	eventLister.RegisterProcessor(message.MessageTypeRegRmResult, clientOnResponseProcessor)
+	eventLister.RegisterProcessor(message.MessageTypeGlobalBeginResult, clientOnResponseProcessor)
+	eventLister.RegisterProcessor(message.MessageTypeGlobalCommitResult, clientOnResponseProcessor)
+
+	eventLister.RegisterProcessor(message.MessageTypeGlobalReportResult, clientOnResponseProcessor)
+	eventLister.RegisterProcessor(message.MessageTypeGlobalRollbackResult, clientOnResponseProcessor)
+	eventLister.RegisterProcessor(message.MessageTypeGlobalStatusResult, clientOnResponseProcessor)
+	eventLister.RegisterProcessor(message.MessageTypeRegCltResult, clientOnResponseProcessor)
 }
 
-type clientOnResponseProcessor struct{}
+type clientOnResponseProcessor struct {
+	gettyClient *getty.GettyRemotingClient
+}
 
 func (f *clientOnResponseProcessor) Process(ctx context.Context, rpcMessage message.RpcMessage) error {
 	log.Infof("the rm client received  clientOnResponse msg %#v from tc server.", rpcMessage)
 	if mergedResult, ok := rpcMessage.Body.(message.MergeResultMessage); ok {
-		mergedMessage := getty.GetGettyRemotingInstance().GetMergedMessage(rpcMessage.ID)
+		mergedMessage := f.gettyClient.GetMergedMessage(rpcMessage.ID)
 		if mergedMessage != nil {
 			for i := 0; i < len(mergedMessage.Msgs); i++ {
 				msgID := mergedMessage.MsgIds[i]
-				response := getty.GetGettyRemotingInstance().GetMessageFuture(msgID)
+				response := f.gettyClient.GetMessageFuture(msgID)
 				if response != nil {
 					response.Response = mergedResult.Msgs[i]
 					response.Done <- struct{}{}
-					getty.GetGettyRemotingInstance().RemoveMessageFuture(msgID)
+					f.gettyClient.RemoveMessageFuture(msgID)
 				}
 			}
-			getty.GetGettyRemotingInstance().RemoveMergedMessageFuture(rpcMessage.ID)
+			f.gettyClient.RemoveMergedMessageFuture(rpcMessage.ID)
 		}
 		return nil
 	} else {
 		// 如果是请求消息，做处理逻辑
-		msgFuture := getty.GetGettyRemotingInstance().GetMessageFuture(rpcMessage.ID)
+		msgFuture := f.gettyClient.GetMessageFuture(rpcMessage.ID)
 		if msgFuture != nil {
-			getty.GetGettyRemotingInstance().NotifyRpcMessageResponse(rpcMessage)
-			getty.GetGettyRemotingInstance().RemoveMessageFuture(rpcMessage.ID)
+			f.gettyClient.NotifyRpcMessageResponse(rpcMessage)
+			f.gettyClient.RemoveMessageFuture(rpcMessage.ID)
 		} else {
 			if _, ok := rpcMessage.Body.(message.AbstractResultMessage); ok {
 				log.Infof("the rm client received response msg [{}] from tc server.", msgFuture)
