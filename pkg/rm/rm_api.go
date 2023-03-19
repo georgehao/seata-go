@@ -31,21 +31,10 @@ type Resource interface {
 	GetBranchType() branch.BranchType
 }
 
-// branch resource which contains branch to commit or rollback
-type BranchResource struct {
-	BranchType      branch.BranchType
-	Xid             string
-	BranchId        int64
-	ResourceId      string
-	ApplicationData []byte
-}
-
 // ResourceManagerInbound Control a branch transaction commit or rollback
 type ResourceManagerInbound interface {
-	// Commit a branch transaction
-	BranchCommit(ctx context.Context, resource BranchResource) (branch.BranchStatus, error)
-	// Rollback a branch transaction
-	BranchRollback(ctx context.Context, resource BranchResource) (branch.BranchStatus, error)
+	BranchCommit(ctx context.Context, resource branch.BranchResource) (branch.BranchStatus, error)
+	BranchRollback(ctx context.Context, resource branch.BranchResource) (branch.BranchStatus, error)
 }
 
 // BranchRegisterParam Branch register function param for ResourceManager
@@ -75,13 +64,10 @@ type LockQueryParam struct {
 	LockKeys   string
 }
 
-// Resource Manager: send outbound request to TC
+// ResourceManagerOutbound send outbound request to TC
 type ResourceManagerOutbound interface {
-	// Branch register long
 	BranchRegister(ctx context.Context, param BranchRegisterParam) (int64, error)
-	//  Branch report
 	BranchReport(ctx context.Context, param BranchReportParam) error
-	// Lock query boolean
 	LockQuery(ctx context.Context, param LockQueryParam) (bool, error)
 }
 
@@ -90,13 +76,13 @@ type ResourceManager interface {
 	ResourceManagerInbound
 	ResourceManagerOutbound
 
-	// Register a Resource to be managed by Resource Manager
+	// RegisterResource register a Resource to be managed by Resource Manager
 	RegisterResource(resource Resource) error
-	//  Unregister a Resource from the Resource Manager
+	// UnregisterResource unregister a Resource from the Resource Manager
 	UnregisterResource(resource Resource) error
-	// Get all resources managed by this manager
+	// GetCachedResources get all resources managed by this manager
 	GetCachedResources() *sync.Map
-	// Get the BranchType
+	// GetBranchType get the BranchType
 	GetBranchType() branch.BranchType
 }
 

@@ -23,10 +23,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/seata/seata-go/pkg/protocol/message"
-	"github.com/seata/seata-go/pkg/remoting/getty"
+	"github.com/seata/seata-go/pkg/remoting"
 	"github.com/seata/seata-go/pkg/util/backoff"
 	"github.com/seata/seata-go/pkg/util/log"
 )
@@ -54,7 +52,7 @@ func (g *GlobalTransactionManager) Begin(ctx context.Context, timeout time.Durat
 		TransactionName: GetTxName(ctx),
 		Timeout:         timeout,
 	}
-	res, err := getty.GetGettyRemotingClient().SendSyncRequest(req)
+	res, err := remoting.RemotingClient().SendSyncRequest(req)
 	if err != nil {
 		log.Errorf("GlobalBeginRequest  error %v", err)
 		return err
@@ -76,7 +74,7 @@ func (g *GlobalTransactionManager) Commit(ctx context.Context, gtr *GlobalTransa
 		return nil
 	}
 	if gtr.Xid == "" {
-		return fmt.Errorf("Commit xid should not be empty")
+		return fmt.Errorf("commit xid should not be empty")
 	}
 
 	bf := backoff.New(ctx, backoff.Config{
@@ -91,7 +89,7 @@ func (g *GlobalTransactionManager) Commit(ctx context.Context, gtr *GlobalTransa
 	var res interface{}
 	var err error
 	for bf.Ongoing() {
-		if res, err = getty.GetGettyRemotingClient().SendSyncRequest(req); err == nil {
+		if res, err = remoting.RemotingClient().SendSyncRequest(req); err == nil {
 			break
 		}
 		log.Warnf("send global commit request failed, xid %s, error %v", gtr.Xid, err)
@@ -99,7 +97,7 @@ func (g *GlobalTransactionManager) Commit(ctx context.Context, gtr *GlobalTransa
 	}
 
 	if bf.Err() != nil {
-		lastErr := errors.Wrap(err, bf.Err().Error())
+		lastErr := fmt.Errorf("commit err: %w, :%v", err, bf.Err())
 		log.Warnf("send global commit request failed, xid %s, error %v", gtr.Xid, lastErr)
 		return lastErr
 	}
@@ -133,7 +131,7 @@ func (g *GlobalTransactionManager) Rollback(ctx context.Context, gtr *GlobalTran
 
 	var err error
 	for bf.Ongoing() {
-		if res, err = getty.GetGettyRemotingClient().SendSyncRequest(req); err == nil {
+		if res, err = remoting.RemotingClient().SendSyncRequest(req); err == nil {
 			break
 		}
 		log.Errorf("GlobalRollbackRequest rollback failed, xid %s, error %v", gtr.Xid, err)
@@ -141,7 +139,7 @@ func (g *GlobalTransactionManager) Rollback(ctx context.Context, gtr *GlobalTran
 	}
 
 	if bf.Err() != nil {
-		lastErr := errors.Wrap(err, bf.Err().Error())
+		lastErr := fmt.Errorf("rollback err:%v, %w", err, bf.Err())
 		log.Errorf("GlobalRollbackRequest rollback failed, xid %s, error %v", gtr.Xid, lastErr)
 		return lastErr
 	}

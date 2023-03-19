@@ -115,7 +115,7 @@ func (m *MockResourceManagerInbound) EXPECT() *MockResourceManagerInboundMockRec
 }
 
 // BranchCommit mocks base method.
-func (m *MockResourceManagerInbound) BranchCommit(ctx context.Context, resource BranchResource) (branch.BranchStatus, error) {
+func (m *MockResourceManagerInbound) BranchCommit(ctx context.Context, resource branch.BranchResource) (branch.BranchStatus, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BranchCommit", ctx, resource)
 	ret0, _ := ret[0].(branch.BranchStatus)
@@ -130,7 +130,7 @@ func (mr *MockResourceManagerInboundMockRecorder) BranchCommit(ctx, resource int
 }
 
 // BranchRollback mocks base method.
-func (m *MockResourceManagerInbound) BranchRollback(ctx context.Context, resource BranchResource) (branch.BranchStatus, error) {
+func (m *MockResourceManagerInbound) BranchRollback(ctx context.Context, resource branch.BranchResource) (branch.BranchStatus, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BranchRollback", ctx, resource)
 	ret0, _ := ret[0].(branch.BranchStatus)
@@ -235,7 +235,7 @@ func (m *MockResourceManager) EXPECT() *MockResourceManagerMockRecorder {
 }
 
 // BranchCommit mocks base method.
-func (m *MockResourceManager) BranchCommit(ctx context.Context, resource BranchResource) (branch.BranchStatus, error) {
+func (m *MockResourceManager) BranchCommit(ctx context.Context, resource branch.BranchResource) (branch.BranchStatus, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BranchCommit", ctx, resource)
 	ret0, _ := ret[0].(branch.BranchStatus)
@@ -279,7 +279,7 @@ func (mr *MockResourceManagerMockRecorder) BranchReport(ctx, param interface{}) 
 }
 
 // BranchRollback mocks base method.
-func (m *MockResourceManager) BranchRollback(ctx context.Context, resource BranchResource) (branch.BranchStatus, error) {
+func (m *MockResourceManager) BranchRollback(ctx context.Context, resource branch.BranchResource) (branch.BranchStatus, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BranchRollback", ctx, resource)
 	ret0, _ := ret[0].(branch.BranchStatus)

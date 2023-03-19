@@ -27,7 +27,6 @@ import (
 
 	"github.com/seata/seata-go/pkg/protocol/branch"
 	"github.com/seata/seata-go/pkg/protocol/message"
-	"github.com/seata/seata-go/pkg/remoting/getty"
 	"github.com/seata/seata-go/pkg/rm"
 
 	"github.com/stretchr/testify/assert"
@@ -46,7 +45,7 @@ func TestActionContext(t *testing.T) {
 
 // TestBranchReport
 func TestBranchReport(t *testing.T) {
-	patches := gomonkey.ApplyMethod(reflect.TypeOf(getty.GetGettyRemotingClient()), "SendSyncRequest", func(_ *getty.GettyRemotingClient, msg interface{}) (interface{}, error) {
+	patches := gomonkey.ApplyMethod(reflect.TypeOf(transport.GetGettyRemotingClient()), "SendSyncRequest", func(_ *transport.GettyRemotingClient, msg interface{}) (interface{}, error) {
 		return message.BranchReportResponse{
 			AbstractTransactionResponse: message.AbstractTransactionResponse{
 				AbstractResultMessage: message.AbstractResultMessage{

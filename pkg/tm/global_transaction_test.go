@@ -30,7 +30,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/seata/seata-go/pkg/protocol/message"
-	"github.com/seata/seata-go/pkg/remoting/getty"
 )
 
 func TestBegin(t *testing.T) {
@@ -60,7 +59,7 @@ func TestBegin(t *testing.T) {
 			wantErrString:      "mock Begin return",
 			wantHasMock:        true,
 			wantMockTargetName: "SendSyncRequest",
-			wantMockFunction: func(_ *getty.GettyRemotingClient, msg interface{}) (interface{}, error) {
+			wantMockFunction: func(_ *transport.GettyRemotingClient, msg interface{}) (interface{}, error) {
 				return nil, errors.New("mock Begin return")
 			},
 		},
@@ -72,7 +71,7 @@ func TestBegin(t *testing.T) {
 			wantErrString:      "GlobalBeginRequest result is empty or result code is failed.",
 			wantHasMock:        true,
 			wantMockTargetName: "SendSyncRequest",
-			wantMockFunction: func(_ *getty.GettyRemotingClient, msg interface{}) (interface{}, error) {
+			wantMockFunction: func(_ *transport.GettyRemotingClient, msg interface{}) (interface{}, error) {
 				return nil, nil
 			},
 		},
@@ -84,7 +83,7 @@ func TestBegin(t *testing.T) {
 			wantErrString:      "GlobalBeginRequest result is empty or result code is failed.",
 			wantHasMock:        true,
 			wantMockTargetName: "SendSyncRequest",
-			wantMockFunction: func(_ *getty.GettyRemotingClient, msg interface{}) (interface{}, error) {
+			wantMockFunction: func(_ *transport.GettyRemotingClient, msg interface{}) (interface{}, error) {
 				return message.GlobalBeginResponse{
 					AbstractTransactionResponse: message.AbstractTransactionResponse{
 						AbstractResultMessage: message.AbstractResultMessage{
@@ -101,7 +100,7 @@ func TestBegin(t *testing.T) {
 			wantHasError:       false,
 			wantHasMock:        true,
 			wantMockTargetName: "SendSyncRequest",
-			wantMockFunction: func(_ *getty.GettyRemotingClient, msg interface{}) (interface{}, error) {
+			wantMockFunction: func(_ *transport.GettyRemotingClient, msg interface{}) (interface{}, error) {
 				return message.GlobalBeginResponse{
 					AbstractTransactionResponse: message.AbstractTransactionResponse{
 						AbstractResultMessage: message.AbstractResultMessage{
@@ -116,7 +115,7 @@ func TestBegin(t *testing.T) {
 		var stub *gomonkey.Patches
 		// set up stub
 		if v.wantHasMock {
-			stub = gomonkey.ApplyMethod(reflect.TypeOf(getty.GetGettyRemotingClient()), v.wantMockTargetName, v.wantMockFunction)
+			stub = gomonkey.ApplyMethod(reflect.TypeOf(transport.GetGettyRemotingClient()), v.wantMockTargetName, v.wantMockFunction)
 		}
 		ctx := InitSeataContext(context.Background())
 		SetTx(ctx, &v.gtx)
@@ -179,7 +178,7 @@ func TestCommit(t *testing.T) {
 			wantErrString:      "mock error retry",
 			wantHasMock:        true,
 			wantMockTargetName: "SendSyncRequest",
-			wantMockFunction: func(_ *getty.GettyRemotingClient, msg interface{}) (interface{}, error) {
+			wantMockFunction: func(_ *transport.GettyRemotingClient, msg interface{}) (interface{}, error) {
 				return nil, errors.New("mock error retry")
 			},
 		},
@@ -192,7 +191,7 @@ func TestCommit(t *testing.T) {
 			wantHasError:       false,
 			wantHasMock:        true,
 			wantMockTargetName: "SendSyncRequest",
-			wantMockFunction: func(_ *getty.GettyRemotingClient, msg interface{}) (interface{}, error) {
+			wantMockFunction: func(_ *transport.GettyRemotingClient, msg interface{}) (interface{}, error) {
 				return message.GlobalCommitResponse{
 					AbstractGlobalEndResponse: message.AbstractGlobalEndResponse{
 						GlobalStatus: message.GlobalStatusCommitted,
@@ -205,7 +204,7 @@ func TestCommit(t *testing.T) {
 		var stub *gomonkey.Patches
 		// set up stub
 		if v.wantHasMock {
-			stub = gomonkey.ApplyMethod(reflect.TypeOf(getty.GetGettyRemotingClient()), v.wantMockTargetName, v.wantMockFunction)
+			stub = gomonkey.ApplyMethod(reflect.TypeOf(transport.GetGettyRemotingClient()), v.wantMockTargetName, v.wantMockFunction)
 		}
 
 		ctx := context.Background()
@@ -269,7 +268,7 @@ func TestRollback(t *testing.T) {
 			wantErrString:      "mock error retry",
 			wantHasMock:        true,
 			wantMockTargetName: "SendSyncRequest",
-			wantMockFunction: func(_ *getty.GettyRemotingClient, msg interface{}) (interface{}, error) {
+			wantMockFunction: func(_ *transport.GettyRemotingClient, msg interface{}) (interface{}, error) {
 				return nil, errors.New("mock error retry")
 			},
 		},
@@ -282,7 +281,7 @@ func TestRollback(t *testing.T) {
 			wantHasError:       false,
 			wantHasMock:        true,
 			wantMockTargetName: "SendSyncRequest",
-			wantMockFunction: func(_ *getty.GettyRemotingClient, msg interface{}) (interface{}, error) {
+			wantMockFunction: func(_ *transport.GettyRemotingClient, msg interface{}) (interface{}, error) {
 				return message.GlobalRollbackResponse{
 					AbstractGlobalEndResponse: message.AbstractGlobalEndResponse{
 						GlobalStatus: message.GlobalStatusRollbacked,
@@ -295,7 +294,7 @@ func TestRollback(t *testing.T) {
 		var stub *gomonkey.Patches
 		// set up stub
 		if v.wantHasMock {
-			stub = gomonkey.ApplyMethod(reflect.TypeOf(getty.GetGettyRemotingClient()), v.wantMockTargetName, v.wantMockFunction)
+			stub = gomonkey.ApplyMethod(reflect.TypeOf(transport.GetGettyRemotingClient()), v.wantMockTargetName, v.wantMockFunction)
 		}
 
 		err := GetGlobalTransactionManager().Rollback(context.Background(), &v.globalTransaction)

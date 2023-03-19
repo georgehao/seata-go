@@ -18,13 +18,12 @@
 package rm
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
-	"github.com/pkg/errors"
-
 	"github.com/seata/seata-go/pkg/protocol/message"
-	"github.com/seata/seata-go/pkg/remoting/getty"
+	"github.com/seata/seata-go/pkg/remoting"
 	"github.com/seata/seata-go/pkg/util/log"
 )
 
@@ -55,7 +54,7 @@ func (r *RMRemoting) BranchRegister(param BranchRegisterParam) (int64, error) {
 		BranchType:      param.BranchType,
 		ApplicationData: []byte(param.ApplicationData),
 	}
-	resp, err := getty.GetGettyRemotingClient().SendSyncRequest(request)
+	resp, err := remoting.RemotingClient().SendSyncRequest(request)
 	if err != nil || resp == nil {
 		log.Errorf("BranchRegister error: %v, res %v", err.Error(), resp)
 		return 0, err
@@ -77,7 +76,7 @@ func (r *RMRemoting) BranchReport(param BranchReportParam) error {
 		BranchType:      param.BranchType,
 	}
 
-	resp, err := getty.GetGettyRemotingClient().SendSyncRequest(request)
+	resp, err := remoting.RemotingClient().SendSyncRequest(request)
 	if err != nil {
 		log.Errorf("branch report request error: %+v", err)
 		return err
@@ -105,7 +104,7 @@ func (r *RMRemoting) RegisterResource(resource Resource) error {
 		},
 		ResourceIds: resource.GetResourceId(),
 	}
-	res, err := getty.GetGettyRemotingClient().SendSyncRequest(req)
+	res, err := remoting.RemotingClient().SendSyncRequest(req)
 	if err != nil {
 		log.Errorf("RegisterResourceManager error: {%#v}", err.Error())
 		return err

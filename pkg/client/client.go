@@ -24,7 +24,8 @@ import (
 	at "github.com/seata/seata-go/pkg/datasource/sql"
 	"github.com/seata/seata-go/pkg/datasource/sql/exec/config"
 	"github.com/seata/seata-go/pkg/integration"
-	"github.com/seata/seata-go/pkg/remoting/getty"
+	"github.com/seata/seata-go/pkg/remoting"
+	remotingConf "github.com/seata/seata-go/pkg/remoting/config"
 	"github.com/seata/seata-go/pkg/rm"
 	"github.com/seata/seata-go/pkg/rm/tcc"
 	"github.com/seata/seata-go/pkg/tm"
@@ -60,7 +61,7 @@ func initTmClient(cfg *Config) {
 
 // initRemoting init rpc client
 func initRemoting(cfg *Config) {
-	getty.InitRpcClient(&cfg.GettyConfig, &getty.SeataConfig{
+	remoting.InitRpcClient(&cfg.GettyConfig, &remotingConf.SeataConfig{
 		ApplicationID:        cfg.ApplicationID,
 		TxServiceGroup:       cfg.TxServiceGroup,
 		ServiceVgroupMapping: cfg.ServiceConfig.VgroupMapping,

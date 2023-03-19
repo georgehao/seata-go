@@ -34,7 +34,6 @@ import (
 
 	"github.com/seata/seata-go/pkg/datasource/sql"
 	"github.com/seata/seata-go/pkg/datasource/sql/undo"
-	"github.com/seata/seata-go/pkg/remoting/getty"
 	"github.com/seata/seata-go/pkg/rm"
 	"github.com/seata/seata-go/pkg/rm/tcc"
 	"github.com/seata/seata-go/pkg/tm"
@@ -74,12 +73,12 @@ type Config struct {
 	EnableAutoDataSourceProxy bool   `yaml:"enable-auto-data-source-proxy" json:"enable-auto-data-source-proxy,omitempty" koanf:"enable-auto-data-source-proxy"`
 	DataSourceProxyMode       string `yaml:"data-source-proxy-mode" json:"data-source-proxy-mode,omitempty" koanf:"data-source-proxy-mode"`
 
-	AsyncWorkerConfig sql.AsyncWorkerConfig `yaml:"async" json:"async" koanf:"async"`
-	TCCConfig         tcc.Config            `yaml:"tcc" json:"tcc" koanf:"tcc"`
-	ClientConfig      ClientConfig          `yaml:"client" json:"client" koanf:"client"`
-	GettyConfig       getty.Config          `yaml:"getty" json:"getty" koanf:"getty"`
-	TransportConfig   getty.TransportConfig `yaml:"transport" json:"transport" koanf:"transport"`
-	ServiceConfig     tm.ServiceConfig      `yaml:"service" json:"service" koanf:"service"`
+	AsyncWorkerConfig sql.AsyncWorkerConfig     `yaml:"async" json:"async" koanf:"async"`
+	TCCConfig         tcc.Config                `yaml:"tcc" json:"tcc" koanf:"tcc"`
+	ClientConfig      ClientConfig              `yaml:"client" json:"client" koanf:"client"`
+	GettyConfig       transport.Config          `yaml:"getty" json:"getty" koanf:"getty"`
+	TransportConfig   transport.TransportConfig `yaml:"transport" json:"transport" koanf:"transport"`
+	ServiceConfig     tm.ServiceConfig          `yaml:"service" json:"service" koanf:"service"`
 }
 
 func (c *Config) RegisterFlags(f *flag.FlagSet) {
