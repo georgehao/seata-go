@@ -21,12 +21,12 @@ import (
 	"context"
 
 	"github.com/seata/seata-go/pkg/protocol/message"
-	"github.com/seata/seata-go/pkg/remoting/getty"
+	"github.com/seata/seata-go/pkg/remoting/transport"
 	"github.com/seata/seata-go/pkg/rm"
 	"github.com/seata/seata-go/pkg/util/log"
 )
 
-func initBranchCommit(eventLister *getty.GettyClientHandler, remoteClient *getty.GettyRemotingClient) {
+func InitBranchCommit(eventLister *transport.GettyClientHandler, remoteClient *transport.GettyRemotingClient) {
 	rmBranchCommitProcessor := &rmBranchCommitProcessor{
 		remoteClient: remoteClient,
 	}
@@ -34,7 +34,7 @@ func initBranchCommit(eventLister *getty.GettyClientHandler, remoteClient *getty
 }
 
 type rmBranchCommitProcessor struct {
-	remoteClient *getty.GettyRemotingClient
+	remoteClient *transport.GettyRemotingClient
 }
 
 func (f *rmBranchCommitProcessor) Process(ctx context.Context, rpcMessage message.RpcMessage) error {

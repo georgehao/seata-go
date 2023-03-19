@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package getty
+package transport
 
 import (
 	"reflect"
@@ -41,7 +41,7 @@ type SessionManager struct {
 	sessionSize    int32
 }
 
-func newSessionManager() *SessionManager {
+func NewSessionManager() *SessionManager {
 	return &SessionManager{
 		allSessions: sync.Map{},
 		// serverAddress -> rpc_client.Session -> bool

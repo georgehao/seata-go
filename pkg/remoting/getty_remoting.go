@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package getty
+package remoting
 
 import (
 	"fmt"
@@ -39,7 +39,7 @@ type GettyRemoting struct {
 	loadBalanceType string
 }
 
-func newGettyRemotingInstance(loadBalanceType string, manager *SessionManager) *GettyRemoting {
+func NewGettyRemotingInstance(loadBalanceType string, manager *SessionManager) *GettyRemoting {
 	return &GettyRemoting{
 		loadBalanceType: loadBalanceType,
 		futures:         &sync.Map{},

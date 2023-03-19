@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package getty
+package remoting
 
 import (
 	"fmt"
@@ -34,10 +34,10 @@ type GettyRemotingClient struct {
 	remoting    *GettyRemoting
 }
 
-func newGettyRemotingClient(loadBalanceType string, smgr *SessionManager) *GettyRemotingClient {
+func NewGettyRemotingClient(loadBalanceType string, smgr *SessionManager) *GettyRemotingClient {
 	return &GettyRemotingClient{
 		idGenerator: &atomic.Uint32{},
-		remoting:    newGettyRemotingInstance(loadBalanceType, smgr),
+		remoting:    NewGettyRemotingInstance(loadBalanceType, smgr),
 	}
 }
 

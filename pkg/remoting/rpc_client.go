@@ -15,37 +15,45 @@
  * limitations under the License.
  */
 
-package getty
+package remoting
 
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/seata/seata-go/pkg/remoting/processor/client"
 	"net"
 	"strings"
 	"sync"
 
-	getty "github.com/apache/dubbo-getty"
+	"github.com/apache/dubbo-getty"
 	gxsync "github.com/dubbogo/gost/sync"
 
 	"github.com/seata/seata-go/pkg/protocol/codec"
+	"github.com/seata/seata-go/pkg/remoting/config"
+	"github.com/seata/seata-go/pkg/remoting/processor/client"
+	"github.com/seata/seata-go/pkg/remoting/transport"
 	"github.com/seata/seata-go/pkg/util/log"
 )
 
+var remotingClient *transport.GettyRemotingClient
+
+func RemotingClient() *transport.GettyRemotingClient {
+	return remotingClient
+}
+
 type RpcClient struct {
-	gettyConf    *Config
-	seataConf    *SeataConfig
+	gettyConf    *config.Config
+	seataConf    *config.SeataConfig
 	gettyClients []getty.Client
 	futures      *sync.Map
 
-	eventListener  *GettyClientHandler
-	rpcPkgHandler  *RpcPackageHandler
-	sessionMgr     *SessionManager
+	eventListener  *transport.GettyClientHandler
+	rpcPkgHandler  *transport.RpcPackageHandler
+	sessionMgr     *transport.SessionManager
 	remotingClient *GettyRemotingClient
 }
 
-func InitRpcClient(gettyConfig *Config, seataConfig *SeataConfig) {
-	iniConfig(seataConfig)
+func InitRpcClient(gettyConfig *config.Config, seataConfig *config.SeataConfig) {
+	config.InitConfig(seataConfig)
 	rpcClient := &RpcClient{
 		gettyConf:    gettyConfig,
 		seataConf:    seataConfig,
@@ -53,13 +61,15 @@ func InitRpcClient(gettyConfig *Config, seataConfig *SeataConfig) {
 	}
 	codec.Init()
 	rpcClient.init()
+
+	remotingClient = rpcClient.remotingClient
 }
 
 func (c *RpcClient) init() {
-	c.sessionMgr = newSessionManager()
-	c.rpcPkgHandler = &RpcPackageHandler{}
-	c.remotingClient = newGettyRemotingClient(c.gettyConf.LoadBalanceType, c.sessionMgr)
-	c.eventListener = newGettyClientHandler(c.sessionMgr, c.remotingClient)
+	c.sessionMgr = transport.NewSessionManager()
+	c.rpcPkgHandler = &transport.RpcPackageHandler{}
+	c.remotingClient = transport.NewGettyRemotingClient(c.gettyConf.LoadBalanceType, c.sessionMgr)
+	c.eventListener = transport.NewGettyClientHandler(c.sessionMgr, c.remotingClient)
 
 	client.RegisterProcessor(c.eventListener, c.remotingClient)
 

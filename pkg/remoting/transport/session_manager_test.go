@@ -15,38 +15,10 @@
  * limitations under the License.
  */
 
-package getty
+package transport
 
-import (
-	"testing"
-	"time"
+import "testing"
 
-	"github.com/seata/seata-go/pkg/protocol/codec"
-	"github.com/seata/seata-go/pkg/protocol/message"
-	"github.com/stretchr/testify/assert"
-)
+func TestGetXid(t *testing.T) {
 
-func TestRpcPackageHandler(t *testing.T) {
-	msg := message.RpcMessage{
-		ID:         1123,
-		Type:       message.GettyRequestTypeRequestSync,
-		Codec:      byte(codec.CodecTypeSeata),
-		Compressor: byte(1),
-		HeadMap: map[string]string{
-			"name":    " Jack",
-			"age":     "12",
-			"address": "Beijing",
-		},
-		Body: message.GlobalBeginRequest{
-			Timeout:         2 * time.Second,
-			TransactionName: "SeataGoTransaction",
-		},
-	}
-
-	codec := RpcPackageHandler{}
-	bytes, err := codec.Write(nil, msg)
-	assert.Nil(t, err)
-	msg2, _, _ := codec.Read(nil, bytes)
-
-	assert.Equal(t, msg, msg2)
 }

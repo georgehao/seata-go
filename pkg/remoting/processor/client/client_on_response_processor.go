@@ -21,11 +21,11 @@ import (
 	"context"
 
 	"github.com/seata/seata-go/pkg/protocol/message"
-	"github.com/seata/seata-go/pkg/remoting/getty"
+	"github.com/seata/seata-go/pkg/remoting/transport"
 	"github.com/seata/seata-go/pkg/util/log"
 )
 
-func initOnResponse(eventLister *getty.GettyClientHandler, gettyClient *getty.GettyRemotingClient) {
+func InitOnResponse(eventLister *transport.GettyClientHandler, gettyClient *transport.GettyRemotingClient) {
 	clientOnResponseProcessor := &clientOnResponseProcessor{
 		gettyClient: gettyClient,
 	}
@@ -45,7 +45,7 @@ func initOnResponse(eventLister *getty.GettyClientHandler, gettyClient *getty.Ge
 }
 
 type clientOnResponseProcessor struct {
-	gettyClient *getty.GettyRemotingClient
+	gettyClient *transport.GettyRemotingClient
 }
 
 func (f *clientOnResponseProcessor) Process(ctx context.Context, rpcMessage message.RpcMessage) error {

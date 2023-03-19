@@ -21,12 +21,12 @@ import (
 	"context"
 
 	"github.com/seata/seata-go/pkg/protocol/message"
-	"github.com/seata/seata-go/pkg/remoting/getty"
+	"github.com/seata/seata-go/pkg/remoting/transport"
 	"github.com/seata/seata-go/pkg/rm"
 	"github.com/seata/seata-go/pkg/util/log"
 )
 
-func initBranchRollback(eventListener *getty.GettyClientHandler, remotingClient *getty.GettyRemotingClient) {
+func InitBranchRollback(eventListener *transport.GettyClientHandler, remotingClient *transport.GettyRemotingClient) {
 	rmBranchRollbackProcessor := &rmBranchRollbackProcessor{
 		remotingClient: remotingClient,
 	}
@@ -34,7 +34,7 @@ func initBranchRollback(eventListener *getty.GettyClientHandler, remotingClient 
 }
 
 type rmBranchRollbackProcessor struct {
-	remotingClient *getty.GettyRemotingClient
+	remotingClient *transport.GettyRemotingClient
 }
 
 func (f *rmBranchRollbackProcessor) Process(ctx context.Context, rpcMessage message.RpcMessage) error {

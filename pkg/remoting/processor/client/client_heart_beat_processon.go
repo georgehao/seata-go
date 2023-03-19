@@ -21,11 +21,11 @@ import (
 	"context"
 
 	"github.com/seata/seata-go/pkg/protocol/message"
-	"github.com/seata/seata-go/pkg/remoting/getty"
+	"github.com/seata/seata-go/pkg/remoting/transport"
 	"github.com/seata/seata-go/pkg/util/log"
 )
 
-func initHeartBeat(listener *getty.GettyClientHandler) {
+func InitHeartBeat(listener *transport.GettyClientHandler) {
 	listener.RegisterProcessor(message.MessageTypeHeartbeatMsg, &clientHeartBeatProcessor{})
 }
 

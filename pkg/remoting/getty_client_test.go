@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package getty
+package remoting
 
 import (
 	"fmt"
@@ -32,9 +32,11 @@ import (
 )
 
 var remoting *GettyRemoting
+var remotingClient *GettyRemotingClient
 
 func setup() {
 	sgr := newSessionManager()
+	remotingClient = newGettyRemotingClient("XID", sgr)
 	remoting = newGettyRemotingInstance("XID", sgr)
 }
 
@@ -58,18 +60,18 @@ func TestGettyRemotingClient_SendSyncRequest(t *testing.T) {
 			return respMsg, nil
 		})
 
-	resp, err := remoting.("message", nil, )
+	resp, err := remotingClient.SendSyncRequest("message")
 	assert.Empty(t, err)
 	assert.Equal(t, respMsg, resp.(message.GlobalBeginResponse))
 }
 
 // TestGettyRemotingClient_SendAsyncResponse unit test for SendAsyncResponse function
 func TestGettyRemotingClient_SendAsyncResponse(t *testing.T) {
-	gomonkey.ApplyMethod(reflect.TypeOf(GetGettyRemotingInstance()), "SendASync",
+	gomonkey.ApplyMethod(reflect.TypeOf(remoting), "SendASync",
 		func(_ *GettyRemoting, msg message.RpcMessage, s getty.Session, callback callbackMethod) error {
 			return nil
 		})
-	err := GetGettyRemotingClient().SendAsyncResponse(1, "message")
+	err := remotingClient.SendAsyncResponse(1, "message")
 	assert.Empty(t, err)
 }
 
@@ -90,11 +92,11 @@ func TestGettyRemotingClient_SendAsyncRequest(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			gomonkey.ApplyMethod(reflect.TypeOf(GetGettyRemotingInstance()), "SendASync",
+			gomonkey.ApplyMethod(reflect.TypeOf(remoting), "SendASync",
 				func(_ *GettyRemoting, msg message.RpcMessage, s getty.Session, callback callbackMethod) error {
 					return nil
 				})
-			err := GetGettyRemotingClient().SendAsyncRequest(test.message)
+			err := remotingClient.SendAsyncRequest(test.message, nil)
 			assert.Empty(t, err)
 		})
 	}
@@ -134,14 +136,14 @@ func Test_syncCallback(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			if test.wantErr {
-				response, err := GetGettyRemotingClient().syncCallback(test.reqMsg, test.respMsg)
+				response, err := remotingClient.syncCallback(test.reqMsg, test.respMsg)
 				assert.EqualError(t, err, fmt.Sprintf("wait response timeout, request: %#v", test.reqMsg))
 				assert.Empty(t, response)
 			} else {
 				go func() {
 					test.respMsg.Done <- struct{}{}
 				}()
-				response, err := GetGettyRemotingClient().syncCallback(test.reqMsg, test.respMsg)
+				response, err := remotingClient.syncCallback(test.reqMsg, test.respMsg)
 				assert.Empty(t, err)
 				assert.Empty(t, response)
 			}
@@ -170,7 +172,7 @@ func Test_asyncCallback(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			response, err := GetGettyRemotingClient().asyncCallback(test.reqMsg, test.respMsg)
+			response, err := remotingClient.asyncCallback(test.reqMsg, test.respMsg)
 			assert.Empty(t, err)
 			assert.Empty(t, response)
 		})

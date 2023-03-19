@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package getty
+package config
 
 import (
 	"flag"
@@ -86,10 +86,10 @@ type SeataConfig struct {
 	ServiceGrouplist     flagext.StringMap
 }
 
-func iniConfig(seataConf *SeataConfig) {
+func InitConfig(seataConf *SeataConfig) {
 	seataConfig = seataConf
 }
 
-func getSeataConfig() *SeataConfig {
+func GetSeataConfig() *SeataConfig {
 	return seataConfig
 }
